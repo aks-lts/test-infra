@@ -8,7 +8,6 @@ resource clusterIngressFrontdoor 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
   sku: {
     name: 'Standard_AzureFrontDoor'
   }
-  kind: 'frontdoor'
   properties: {
     originResponseTimeoutSeconds: 60
   }
