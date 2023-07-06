@@ -25,6 +25,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy Prow cluster Bicep
+        id: bicep
         uses: azure/arm-deploy@v1
         with:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION }}
@@ -32,7 +33,10 @@ jobs:
           template: ./config/prow/cluster/prow-cluster.bicep
           failOnStdErr: true
 
-      # TODO ^^ read outputs
+      - name: Debug
+        run: echo ${{ steps.bicep.outputs.stdout }}
+
+
 
       - name: Write kubeconfig
         run: echo ${{ secrets.AKS_LTS_PROW_KUBECONFIG }} | base64 -d > ./kubeconfig-aks-lts-prow
@@ -52,3 +56,4 @@ jobs:
 
       - name: 'Apply Prow app manifests'
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
+
