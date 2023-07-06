@@ -30,11 +30,11 @@ jobs:
         run: for f in config/prow/k8s/base/*.yaml; do kubectl apply --server-side=true -f $f; done
 
       - name: 'Create GitHub Token secret'
-        script: |
+        run: |
           echo ${AKS_LTS_PROW_GITHUB_TOKEN} | base64 -d > cert.pem
           kubectl delete secret github-token -n prow || echo "no existing secret to clean up"
           kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=${AKS_LTS_PROW_GITHUB_APP_ID}
           rm cert.pem
 
       - name: 'Apply Prow app manifests'
-        script: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
+        run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
