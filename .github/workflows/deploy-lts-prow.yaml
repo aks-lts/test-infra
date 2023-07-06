@@ -5,6 +5,17 @@ jobs:
     runs-on: ubuntu-latest
     env:
       KUBECONFIG: ./kubeconfig-aks-lts-prow
+      GITHUB_APP_ID: ${{ env.GITHUB_APP_ID }}
+      GITHUB_ORG: ${{ env.GITHUB_ORG }}
+      GITHUB_REPO: ${{ env.GITHUB_REPO }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PROW_HOST: ${{ env.PROW_HOST }}
+      AZURE_STORAGE_ACCOUNT_USER: ${{ env.AZURE_STORAGE_ACCOUNT_USER }}
+      AZURE_STORAGE_ACCOUNT_PASSWORD: ${{ secrets.AZURE_STORAGE_ACCOUNT_PASSWORD }}
+      HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
+      MINIO_CONSOLE_PORT: ${{ env.MINIO_CONSOLE_PORT }}
+      FAKE_MOUNT_SECRET: ${{ secrets.FAKE_MOUNT_SECRET }}
+
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
@@ -18,4 +29,12 @@ jobs:
       - name: 'Apply Prow base manifests'
         run: for f in config/prow/k8s/base/*.yaml; do kubectl apply --server-side=true -f $f; done
 
+      - name: 'Create GitHub Token secret'
+        script: |
+          echo ${AKS_LTS_PROW_GITHUB_TOKEN} | base64 -d > cert.pem
+          kubectl delete secret github-token -n prow || echo "no existing secret to clean up"
+          kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=${AKS_LTS_PROW_GITHUB_APP_ID}
+          rm cert.pem
 
+      - name: 'Apply Prow app manifests'
+        script: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
