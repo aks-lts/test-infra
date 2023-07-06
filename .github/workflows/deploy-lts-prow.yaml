@@ -30,9 +30,9 @@ jobs:
 
       - name: 'Create GitHub Token secret'
         run: |
-          echo ${AKS_LTS_PROW_GITHUB_TOKEN} | base64 -d > cert.pem
+          echo $GITHUB_TOKEN | base64 -d > cert.pem
           kubectl delete secret github-token -n prow || echo "no existing secret to clean up"
-          kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=${AKS_LTS_PROW_GITHUB_APP_ID}
+          kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
           rm cert.pem
 
       - name: 'Apply Prow app manifests'
