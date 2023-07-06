@@ -5,7 +5,16 @@ jobs:
     runs-on: ubuntu-latest
     env:
       KUBECONFIG: ./kubeconfig-aks-lts-prow
-      GITHUB_APP_ID: ${{ env.APP_ID }}
+      GITHUB_APP_ID: ${{ vars.APP_ID }}
+      GITHUB_ORG: ${{ vars.ORG }}
+      GITHUB_REPO: ${{ vars.REPO }}
+      GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      PROW_HOST: ${{ vars.PROW_HOST }}
+      AZURE_STORAGE_ACCOUNT_USER: ${{ vars.AZURE_STORAGE_ACCOUNT_USER }}
+      AZURE_STORAGE_ACCOUNT_PASSWORD: ${{ secrets.AZURE_STORAGE_ACCOUNT_PASSWORD }}
+      HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
+      MINIO_CONSOLE_PORT: ${{ vars.MINIO_CONSOLE_PORT }}
+      FAKE_MOUNT_SECRET: ${{ secrets.FAKE_MOUNT_SECRET }}
     steps:
       - name: Check out repo
         uses: actions/checkout@v3
