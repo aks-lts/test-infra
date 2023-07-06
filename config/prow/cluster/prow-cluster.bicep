@@ -107,15 +107,15 @@ resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
 }
 
 resource prowlogsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
-  name: '${parent.name}/default/prow-logs'
+  name: '${sa.name}/default/prow-logs'
 }
 
 resource statusRecocilerContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
-  name: '${parent.name}/default/status-reconciler'
+  name: '${sa.name}/default/status-reconciler'
 }
 
 resource tideContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-05-01' = {
-  name: '${parent.name}/default/tide'
+  name: '${sa.name}/default/tide'
 }
 
 module clusterIngressFrontDoor 'prow-frontdoor.bicep' = {
