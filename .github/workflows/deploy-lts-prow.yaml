@@ -1,12 +1,21 @@
 name: Deploy AKS LTS Prow
-on: [push]
+on: [push, workflow_dispatch]
 jobs:
   Deploy_AKS_LTS_Prow:
     runs-on: ubuntu-latest
+    env:
+      KUBECONFIG: ./kubeconfig-aks-lts-prow
     steps:
-      - name: Check out repository code
+      - name: Check out repo
         uses: actions/checkout@v3
 
-      - name: List files in the repository
-        run: |
-          ls ${{ github.workspace }}
+      - name: Write kubeconfig
+        run: echo ${{ secrets.AKS_LTS_PROW_KUBECONFIG }} > ./kubeconfig-aks-lts-prow
+
+      - name: Install Kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: 'Apply Prow base manifests'
+        run: for f in config/prow/k8s/base/*.yaml; do kubectl apply --server-side=true -f $f; done
+
+
