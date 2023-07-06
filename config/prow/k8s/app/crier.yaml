@@ -37,7 +37,7 @@ spec:
         - --github-endpoint=https://api.github.com
         - --github-workers=10
         - --kubernetes-blob-storage-workers=10
-        - --github-app-id=$(GITHUB_APP_ID)
+        - --github-app-id=$GITHUB_APP_ID
         - --github-app-private-key-path=/etc/github/cert
         env:
         - name: GITHUB_APP_ID

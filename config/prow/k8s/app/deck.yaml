@@ -55,7 +55,7 @@ spec:
         - --github-graphql-endpoint=http://ghproxy/graphql
         - --s3-credentials-file=/etc/s3-credentials/service-account.json
         - --spyglass=true
-        - --github-app-id=$(GITHUB_APP_ID)
+        - --github-app-id=$GITHUB_APP_ID
         - --github-app-private-key-path=/etc/github/cert
         env:
         - name: GITHUB_APP_ID

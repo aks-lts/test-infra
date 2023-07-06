@@ -37,7 +37,7 @@ spec:
         - --github-endpoint=https://api.github.com
         - --s3-credentials-file=/etc/s3-credentials/service-account.json
         - --status-path=s3://status-reconciler/status-reconciler-status
-        - --github-app-id=$(GITHUB_APP_ID)
+        - --github-app-id=$GITHUB_APP_ID
         - --github-app-private-key-path=/etc/github/cert
         env:
         - name: GITHUB_APP_ID
