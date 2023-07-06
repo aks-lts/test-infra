@@ -1,0 +1,88 @@
+
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: prow
+  name: s3-credentials
+stringData:
+  service-account.json: |
+    {
+      "region": "minio",
+      "access_key": "$AZURE_STORAGE_ACCOUNT_USER",
+      "endpoint": "minio.prow.svc.cluster.local",
+      "insecure": true,
+      "s3_force_path_style": true,
+      "secret_key": "$AZURE_STORAGE_ACCOUNT_PASSWORD"
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: prow
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      nodeSelector:
+        agentpool: prow
+      containers:
+      - name: minio
+        image: minio/minio:RELEASE.2022-02-24T22-12-01Z # https://github.com/minio/minio/pull/14418
+        args:
+        - gateway
+        - azure
+        - --console-address=0.0.0.0:$MINIO_CONSOLE_PORT
+        env:
+        - name: MINIO_ROOT_USER
+          value: "$AZURE_STORAGE_ACCOUNT_USER"
+        - name: MINIO_ROOT_PASSWORD
+          value: "$AZURE_STORAGE_ACCOUNT_PASSWORD"
+        - name: MINIO_REGION_NAME
+          value: minio
+        ports:
+        - containerPort: 9000
+        readinessProbe:
+          httpGet:
+            path: /minio/health/ready
+            port: 9000
+          periodSeconds: 20
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: prow
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 9000
+    protocol: TCP
+  selector:
+    app: minio
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-console
+  namespace: prow
+spec:
+  type: NodePort
+  ports:
+  - port: $MINIO_CONSOLE_PORT
+    targetPort: $MINIO_CONSOLE_PORT
+    protocol: TCP
+  selector:
+    app: minio

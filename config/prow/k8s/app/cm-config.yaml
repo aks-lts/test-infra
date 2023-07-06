@@ -1,0 +1,142 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: prow
+  name: config
+data:
+  config.yaml: |
+    prowjob_namespace: prow
+    pod_namespace: test-pods
+
+    in_repo_config:
+      enabled:
+        "*": true
+
+    deck:
+     spyglass:
+       lenses:
+       - lens:
+           name: metadata
+         required_files:
+         - started.json|finished.json
+       - lens:
+           config:
+           name: buildlog
+         required_files:
+         - build-log.txt
+       - lens:
+           name: junit
+         required_files:
+         - .*/junit.*\.xml
+       - lens:
+           name: podinfo
+         required_files:
+         - podinfo.json
+
+    plank:
+      job_url_prefix_config:
+        "*": https://$PROW_HOST/view/
+      report_templates:
+        '*': >-
+            [Full PR test history](https://$PROW_HOST/pr-history?org={{.Spec.Refs.Org}}&repo={{.Spec.Refs.Repo}}&pr={{with index .Spec.Refs.Pulls 0}}{{.Number}}{{end}}).
+            [Your PR dashboard](https://$PROW_HOST/pr?query=is:pr+state:open+author:{{with
+            index .Spec.Refs.Pulls 0}}{{.Author}}{{end}}).
+      default_decoration_config_entries:
+      - config:
+          gcs_configuration:
+            bucket: s3://prow-logs
+            path_strategy: explicit
+            default_org: $GITHUB_ORG
+            default_repo: $GITHUB_REPO
+          github_api_endpoints:
+            - http://ghproxy
+            - https://api.github.com
+          github_app_id: "$GITHUB_APP_ID"
+          github_app_private_key_secret:
+            name: github-token
+            key: cert
+          s3_credentials_secret: s3-credentials
+          utility_images:
+            clonerefs: gcr.io/k8s-prow/clonerefs:v20230519-bb3c69e522
+            entrypoint: gcr.io/k8s-prow/entrypoint:v20230519-bb3c69e522
+            initupload: gcr.io/k8s-prow/initupload:v20230519-bb3c69e522
+            sidecar: gcr.io/k8s-prow/sidecar:v20230519-bb3c69e522
+
+    tide:
+      queries:
+      - labels:
+        - lgtm
+        - approved
+        missingLabels:
+        - needs-rebase
+        - do-not-merge/hold
+        - do-not-merge/work-in-progress
+        - do-not-merge/invalid-owners-file
+        orgs:
+        - $GITHUB_ORG
+
+    decorate_all_jobs: true
+    periodics:
+    - interval: 1h
+      agent: kubernetes
+      name: echo-test
+      namespace: test-pods
+      spec:
+        containers:
+        - image: alpine
+          command: ["/bin/date"]
+    presubmits:
+      $GITHUB_ORG/$GITHUB_REPO:
+      - always_run: true
+        context: pull-kubernetes-unit
+        decorate: true
+        namespace: test-pods
+        name: pull-kubernetes-unit
+        path_alias: k8s.io/kubernetes
+        spec:
+          nodeSelector:
+            agentpool: k8stest
+          containers:
+          - command:
+            - make
+            - test
+            image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20230513-7e1db2f1bb-1.24
+            name: ""
+            resources:
+              limits:
+                cpu: "4"
+                memory: 8Gi
+              requests:
+                cpu: "2"
+                memory: 4Gi
+          securityContext:
+            runAsUser: 2000
+      - always_run: true
+        context: pull-kubernetes-dependencies
+        decorate: true
+        name: pull-kubernetes-dependencies
+        path_alias: k8s.io/kubernetes
+        spec:
+          nodeSelector:
+            agentpool: k8stest
+          containers:
+          - args:
+            - make
+            - verify
+            command:
+            - runner.sh
+            env:
+            - name: WHAT
+              value: external-dependencies-version vendor vendor-licenses
+            image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20230513-7e1db2f1bb-1.26
+            name: main
+            resources:
+              limits:
+                cpu: "2"
+                memory: 4Gi
+              requests:
+                cpu: "1"
+                memory: 2Gi
+            securityContext:
+              privileged: true
+    postsubmits:
