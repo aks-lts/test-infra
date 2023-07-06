@@ -36,4 +36,4 @@ jobs:
           rm cert.pem
 
       - name: 'Apply Prow app manifests'
-        run: for f in config/prow/k8s/app/*.yaml; do echo $f; envsubst < $f | kubectl apply -f -; done
+        run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
