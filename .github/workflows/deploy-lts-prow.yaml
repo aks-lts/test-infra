@@ -64,5 +64,5 @@ jobs:
       - name: 'Apply Prow app manifests'
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
-          AZURE_STORAGE_ACCOUNT_PASSWORD: ${{ steps.fetch-storage-key.outputs.storage_key }
+          AZURE_STORAGE_ACCOUNT_PASSWORD: ${{ steps.fetch-storage-key.outputs.storage_key }}
 
