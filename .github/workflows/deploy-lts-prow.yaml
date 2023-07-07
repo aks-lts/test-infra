@@ -34,9 +34,6 @@ jobs:
           echo "PROW_HOST=${{ steps.bicep.outputs.prowHostName }}" >> "$GITHUB_ENV"
           echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
 
-      - name: Add mask for storage key
-        run: echo '::add-mask::$AZURE_STORAGE_ACCOUNT_PASSWORD'
-
       - name: Fetch storage key
         run: |
           AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
