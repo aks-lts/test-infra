@@ -31,7 +31,7 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION }}
           resourceGroupName: ${{ vars.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
-          failOnStdErr: true
+          failOnStdErr: false
 
       - name: Debug
         run: echo ${{ steps.bicep.outputs.stdout }}
