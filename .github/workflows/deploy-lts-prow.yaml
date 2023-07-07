@@ -35,7 +35,9 @@ jobs:
           echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
 
       - name: Fetch storage key
-        run: echo "AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r ".[0].value")" >> "$GITHUB_ENV"
+        run: |
+          echo '::add-mask::AZURE_STORAGE_ACCOUNT_PASSWORD'
+          echo "AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r ".[0].value")" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
