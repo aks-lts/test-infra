@@ -38,6 +38,11 @@ jobs:
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
 
+      - name: Set up kubelogin for non-interactive login
+        uses: azure/use-kubelogin@v1
+        with:
+          kubelogin-version: 'v0.0.24'
+
       - name: Set AKS cluster context
         uses: azure/aks-set-context@v3
         with:
