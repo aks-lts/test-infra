@@ -34,7 +34,10 @@ jobs:
           failOnStdErr: false
 
       - name: Debug
-        run: echo ${{ steps.bicep.outputs.stdout }}
+        run: |
+          echo ${{ steps.bicep.outputs.aksClusterName }}
+          echo ${{ steps.bicep.outputs.storageAccountKey }}
+          echo ${{ steps.bicep.outputs.kubeconfig }}
 
 
 
