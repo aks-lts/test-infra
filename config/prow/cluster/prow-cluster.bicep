@@ -134,5 +134,5 @@ output resourceGroupName string = resourceGroup().name
 output publicIPName string = ingresspip.name
 output storageAccountName string = sa.name
 #disable-next-line outputs-should-not-contain-secrets // confirmed that GHA properly obfuscates in logs
-output storageAccountKey string = listKeys(sa.id, sa.apiVersion).keys[0].value
+output storageAccountKey string = sa.listKeys().keys[0].value
 output prowHostName string = clusterIngressFrontDoor.outputs.prowHostName
