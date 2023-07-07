@@ -9,7 +9,6 @@ jobs:
       GITHUB_ORG: ${{ vars.ORG }}
       GITHUB_REPO: ${{ vars.REPO }}
       GITHUB_TOKEN: ${{ secrets.TOKEN }}
-      AZURE_STORAGE_ACCOUNT_PASSWORD: ${{ secrets.AZURE_STORAGE_ACCOUNT_PASSWORD }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
       FAKE_MOUNT_SECRET: ${{ secrets.FAKE_MOUNT_SECRET }}
@@ -37,7 +36,8 @@ jobs:
       - name: Fetch other config
         run: |
           echo "PROW_HOST=${{ steps.bicep.outputs.prowHostName }}" >> "$GITHUB_ENV"
-          echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountKey }}" >> "$GITHUB_ENV"
+          echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
+          echo "AZURE_STORAGE_ACCOUNT_PASSWORD=${{ steps.bicep.outputs.storageAccountKey }}" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
