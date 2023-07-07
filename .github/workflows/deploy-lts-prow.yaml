@@ -12,15 +12,6 @@ jobs:
       MINIO_CONSOLE_PORT: 8003
       FAKE_MOUNT_SECRET: ${{ secrets.FAKE_MOUNT_SECRET }}
     steps:
-      - name: Debug
-        id: debug
-        run: |
-          storage_key=foo12345
-          echo $storage_key
-          echo "::add-mask::$storage_key"
-          echo $storage_key
-          echo "storage_key=$storage_key" >> "$GITHUB_OUTPUT"
-
       - name: Check out repo
         uses: actions/checkout@v3
 
@@ -48,7 +39,7 @@ jobs:
         run: |
           storage_key=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
           echo $storage_key
-          echo '::add-mask::$storage_key'
+          echo "::add-mask::$storage_key"
           echo $storage_key
           echo "storage_key=$storage_key" >> "$GITHUB_OUTPUT"
 
