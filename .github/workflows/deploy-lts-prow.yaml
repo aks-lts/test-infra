@@ -38,7 +38,9 @@ jobs:
         id: fetch-storage-key
         run: |
           storage_key=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
+          echo $storage_key
           echo '::add-mask::$storage_key'
+          echo $storage_key
           echo "storage_key=$storage_key" >> "$GITHUB_OUTPUT"
 
       - name: Install Kubectl
