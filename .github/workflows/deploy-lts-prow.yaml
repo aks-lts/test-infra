@@ -48,6 +48,7 @@ jobs:
         with:
           resource-group: ${{ vars.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
+          admin: true
 
       - name: 'Apply Prow base manifests'
         run: for f in config/prow/k8s/base/*.yaml; do kubectl apply --server-side=true -f $f; done
