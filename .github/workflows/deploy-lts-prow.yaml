@@ -11,7 +11,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.TOKEN }}
       AZURE_STORAGE_ACCOUNT_PASSWORD: ${{ secrets.AZURE_STORAGE_ACCOUNT_PASSWORD }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
-      MINIO_CONSOLE_PORT: ${{ vars.MINIO_CONSOLE_PORT }}
+      MINIO_CONSOLE_PORT: 8003
       FAKE_MOUNT_SECRET: ${{ secrets.FAKE_MOUNT_SECRET }}
     steps:
       - name: Check out repo
