@@ -4,7 +4,6 @@ jobs:
   Deploy_AKS_LTS_Prow:
     runs-on: ubuntu-latest
     env:
-      KUBECONFIG: ./kubeconfig-aks-lts-prow
       GITHUB_APP_ID: ${{ vars.APP_ID }}
       GITHUB_ORG: ${{ vars.ORG }}
       GITHUB_REPO: ${{ vars.REPO }}
@@ -30,10 +29,7 @@ jobs:
           template: ./config/prow/cluster/prow-cluster.bicep
           failOnStdErr: false
 
-      - name: Write kubeconfig
-        run: echo ${{ steps.bicep.outputs.kubeconfig }} | base64 -d > ./kubeconfig-aks-lts-prow
-
-      - name: Fetch other config
+      - name: Fetch config
         run: |
           echo "PROW_HOST=${{ steps.bicep.outputs.prowHostName }}" >> "$GITHUB_ENV"
           echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
@@ -41,6 +37,11 @@ jobs:
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
+
+      - uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ vars.AZURE_RG }}
+          cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
 
       - name: 'Apply Prow base manifests'
         run: for f in config/prow/k8s/base/*.yaml; do kubectl apply --server-side=true -f $f; done

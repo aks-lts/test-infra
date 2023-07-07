@@ -127,8 +127,6 @@ module clusterIngressFrontDoor 'prow-frontdoor.bicep' = {
   }
 }
 
-#disable-next-line outputs-should-not-contain-secrets // confirmed that GHA properly obfuscates in logs
-output kubeconfig string = aks.listClusterAdminCredential().kubeconfigs[0].value
 output aksClusterName string = aks.name
 output resourceGroupName string = resourceGroup().name
 output publicIPName string = ingresspip.name
