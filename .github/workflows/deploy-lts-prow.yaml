@@ -10,8 +10,10 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.TOKEN }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
-      FAKE_MOUNT_SECRET: ${{ secrets.FAKE_MOUNT_SECRET }}
     steps:
+      - name: Generate fake mount secret
+        run: echo FAKE_MOUNT_SECRET=$(echo '{"account":"fake","password":"fake"}' | base64) >> "$GITHUB_ENV"
+
       - name: Check out repo
         uses: actions/checkout@v3
 
