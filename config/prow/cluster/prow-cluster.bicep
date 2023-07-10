@@ -1,4 +1,4 @@
-param aks_cluster_region string = 'westus'
+param aks_cluster_region string = 'westus3'
 param aks_cluster_prefix string = 'aks-lts-prow'
 param system_vm_sku string = 'Standard_DS3_v2'
 param prow_vm_sku string = 'Standard_DS3_v2'
