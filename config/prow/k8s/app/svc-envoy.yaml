@@ -19,4 +19,4 @@ spec:
   selector:
     app: envoy
   type: LoadBalancer
-  loadBalancerIP: $PUBLIC_IP
+  loadBalancerIP: $INGRESS_IP
