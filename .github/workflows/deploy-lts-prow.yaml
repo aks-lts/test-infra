@@ -35,6 +35,7 @@ jobs:
         run: |
           echo "PROW_HOST=${{ steps.bicep.outputs.prowHostName }}" >> "$GITHUB_ENV"
           echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
+          echo "PUBLIC_IP=${{ steps.bicep.outputs.publicIPName }}" >> "$GITHUB_ENV"
 
       - name: Fetch storage key
         id: fetch-storage-key
@@ -65,4 +66,5 @@ jobs:
 
       - name: 'Apply Prow app manifests'
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
-
+        env:
+          AZURE_RG: ${{ vars.AZURE_RG }}AZURE_RG
