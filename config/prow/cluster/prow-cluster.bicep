@@ -129,6 +129,6 @@ module clusterIngressFrontDoor 'prow-frontdoor.bicep' = {
 
 output aksClusterName string = aks.name
 output resourceGroupName string = resourceGroup().name
-output publicIPName string = ingresspip.name
+output ingressIpAddress string = ingresspip.properties.ipAddress
 output storageAccountName string = sa.name
 output prowHostName string = clusterIngressFrontDoor.outputs.prowHostName
