@@ -7,7 +7,7 @@ jobs:
       GITHUB_APP_ID: ${{ vars.APP_ID }}
       GITHUB_ORG: ${{ vars.ORG }}
       GITHUB_REPO: ${{ vars.REPO }}
-      GITHUB_TOKEN: ${{ secrets.TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.APP_PRIVATE_KEY }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
     steps:
