@@ -7,7 +7,6 @@ jobs:
       GITHUB_APP_ID: ${{ vars.APP_ID }}
       GITHUB_ORG: ${{ vars.ORG }}
       GITHUB_REPO: ${{ vars.REPO }}
-      GITHUB_TOKEN: ${{ secrets.APP_PRIVATE_KEY }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
     steps:
@@ -59,7 +58,7 @@ jobs:
 
       - name: 'Create GitHub Token secret'
         run: |
-          echo $GITHUB_TOKEN | base64 -d > cert.pem
+          echo "${{ secrets.APP_PRIVATE_KEY }}" > cert.pem
           kubectl delete secret github-token -n prow || echo "no existing secret to clean up"
           kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
           rm cert.pem
