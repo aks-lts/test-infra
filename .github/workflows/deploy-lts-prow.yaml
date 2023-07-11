@@ -54,7 +54,7 @@ jobs:
           admin: true
 
       - name: 'Apply Prow base manifests'
-        run: for f in config/prow/k8s/base/*.yaml; do kubectl apply --server-side=true -f $f; done
+        run: for f in config/prow/k8s/base/*.yaml; do kubectl apply -f $f; done
 
       - name: 'Create GitHub Token secret'
         run: |
@@ -62,6 +62,9 @@ jobs:
           kubectl delete secret github-token -n prow || echo "no existing secret to clean up"
           kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
           rm cert.pem
+
+      - name: 'Apply Prowjob CRD'
+        run: for f in config/prow/k8s/prowjob/*.yaml; do kubectl apply --server-side=true -f $f; done
 
       - name: 'Apply Prow app manifests'
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
