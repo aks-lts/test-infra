@@ -67,4 +67,4 @@ jobs:
       - name: 'Apply Prow app manifests'
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
-          AZURE_RG: ${{ vars.AZURE_RG }}AZURE_RG
+          AZURE_RG: ${{ vars.AZURE_RG }}
