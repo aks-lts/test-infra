@@ -3,6 +3,7 @@ kind: Service
 metadata:
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-resource-group: $AZURE_RG
+    service.beta.kubernetes.io/azure-pip-name: $PUBLIC_IP_NAME
   name: envoy
   namespace: projectcontour
 spec:
@@ -19,4 +20,4 @@ spec:
   selector:
     app: envoy
   type: LoadBalancer
-  loadBalancerIP: $INGRESS_IP
+  loadBalancerIP: $PUBLIC_IP_ADDRESS
