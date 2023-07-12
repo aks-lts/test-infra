@@ -73,3 +73,8 @@ jobs:
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
           AZURE_RG: ${{ vars.AZURE_RG }}
+
+      - name: 'Apply test pod manifests'
+        run: for f in config/prow/k8s/test-pods/*.yaml; do envsubst < $f | kubectl apply -f -; done
+        env:
+          AZURE_RG: ${{ vars.AZURE_RG }}
