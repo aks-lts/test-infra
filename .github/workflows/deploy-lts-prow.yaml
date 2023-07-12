@@ -60,8 +60,9 @@ jobs:
       - name: 'Create GitHub Token secrets'
         run: |
           echo "${{ secrets.APP_PRIVATE_KEY }}" > cert.pem
-          kubectl delete secret github-token -n prow || echo "no existing secret to clean up"
+          kubectl delete secret github-token -n prow || echo "no existing secret to clean up in namespace prow"
           kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
+          kubectl delete secret github-token -n prow || echo "no existing secret to clean up in namespace test-pods"
           kubectl create secret generic github-token -n test-pods --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
           rm cert.pem
 
