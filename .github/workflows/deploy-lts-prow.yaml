@@ -1,0 +1,80 @@
+name: Deploy AKS LTS Prow
+on: [push, workflow_dispatch]
+jobs:
+  Deploy_AKS_LTS_Prow:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_APP_ID: ${{ vars.APP_ID }}
+      GITHUB_ORG: ${{ vars.ORG }}
+      GITHUB_REPO: ${{ vars.REPO }}
+      HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
+      MINIO_CONSOLE_PORT: 8003
+    steps:
+      - name: Generate fake mount secret
+        run: echo FAKE_MOUNT_SECRET=$(echo '{"account":"fake","password":"fake"}' | base64) >> "$GITHUB_ENV"
+
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Log into Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Prow cluster Bicep
+        id: bicep
+        uses: azure/arm-deploy@v1
+        with:
+          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION }}
+          resourceGroupName: ${{ vars.AZURE_RG }}
+          template: ./config/prow/cluster/prow-cluster.bicep
+          failOnStdErr: false
+
+      - name: Fetch config
+        run: |
+          echo "PROW_HOST=${{ steps.bicep.outputs.prowHostName }}" >> "$GITHUB_ENV"
+          echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
+          echo "PUBLIC_IP_NAME=${{ steps.bicep.outputs.publicIpName }}" >> "$GITHUB_ENV"
+          echo "PUBLIC_IP_ADDRESS=${{ steps.bicep.outputs.publicIpAddress }}" >> "$GITHUB_ENV"
+          
+      - name: Fetch storage key
+        id: fetch-storage-key
+        run: |
+          AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
+          echo "::add-mask::$AZURE_STORAGE_ACCOUNT_PASSWORD"
+          echo "AZURE_STORAGE_ACCOUNT_PASSWORD=$AZURE_STORAGE_ACCOUNT_PASSWORD" >> "$GITHUB_ENV"
+
+      - name: Install Kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Set AKS cluster context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ vars.AZURE_RG }}
+          cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
+          admin: true
+
+      - name: 'Apply Prow base manifests'
+        run: for f in config/prow/k8s/base/*.yaml; do kubectl apply -f $f; done
+
+      - name: 'Create GitHub Token secrets'
+        run: |
+          echo "${{ secrets.APP_PRIVATE_KEY }}" > cert.pem
+          kubectl delete secret github-token -n prow || echo "no existing secret to clean up in namespace prow"
+          kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
+          kubectl delete secret github-token -n test-pods || echo "no existing secret to clean up in namespace test-pods"
+          kubectl create secret generic github-token -n test-pods --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
+          rm cert.pem
+
+      - name: 'Apply Prowjob CRD'
+        run: for f in config/prow/k8s/prowjob/*.yaml; do kubectl apply --server-side=true -f $f; done
+
+      - name: 'Apply Prow app manifests'
+        run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
+        env:
+          AZURE_RG: ${{ vars.AZURE_RG }}
+
+      - name: 'Apply test pod manifests'
+        run: for f in config/prow/k8s/test-pods/*.yaml; do envsubst < $f | kubectl apply -f -; done
+        env:
+          AZURE_RG: ${{ vars.AZURE_RG }}

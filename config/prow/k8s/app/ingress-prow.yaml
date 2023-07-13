@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: prow
+  name: prow
+spec:
+  rules:
+  - host: lts-prow.aks.azure.com # not necessarily a real domain, as long as it match with frontdoor Microsoft.Cdn/profiles/origingroups/origins.originHostHeader
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: deck
+            port:
+              number: 80
+      - path: /hook
+        pathType: Prefix
+        backend:
+          service:
+            name: hook
+            port:
+              number: 8888
