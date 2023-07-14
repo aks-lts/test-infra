@@ -13,6 +13,7 @@ jobs:
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
       K8S_PROW_IMAGE_TAG: v20230714-b138fd6e05
+      KUBEKINS_E2E_TAG: v20230513-7e1db2f1bb-1.24
     steps:
       - name: Generate fake mount secret
         run: echo FAKE_MOUNT_SECRET=$(echo '{"account":"fake","password":"fake"}' | base64) >> "$GITHUB_ENV"
