@@ -77,7 +77,7 @@ data:
 
     decorate_all_jobs: true
     periodics:
-    - interval: 1d
+    - interval: 24h
       agent: kubernetes
       name: echo-test
       namespace: test-pods
