@@ -100,7 +100,7 @@ data:
           - command:
             - make
             - test
-            image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20230513-7e1db2f1bb-1.24
+            image: gcr.io/k8s-staging-test-infra/kubekins-e2e:$KUBEKINS_E2E_TAG
             name: ""
             resources:
               limits:
@@ -128,7 +128,7 @@ data:
             env:
             - name: WHAT
               value: external-dependencies-version vendor vendor-licenses
-            image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20230513-7e1db2f1bb-1.26
+            image: gcr.io/k8s-staging-test-infra/kubekins-e2e:$KUBEKINS_E2E_TAG
             name: main
             resources:
               limits:
