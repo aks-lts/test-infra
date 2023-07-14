@@ -1,5 +1,8 @@
 name: Deploy AKS LTS Prow
-on: [push, workflow_dispatch]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 jobs:
   Deploy_AKS_LTS_Prow:
     runs-on: ubuntu-latest
