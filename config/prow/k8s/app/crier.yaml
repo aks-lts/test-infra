@@ -28,7 +28,7 @@ spec:
         agentpool: prow
       containers:
       - name: crier
-        image: gcr.io/k8s-prow/crier:v20230519-bb3c69e522
+        image: gcr.io/k8s-prow/crier:$K8S_PROW_IMAGE_TAG
         args:
         - --blob-storage-workers=10
         - --config-path=/etc/config/config.yaml
