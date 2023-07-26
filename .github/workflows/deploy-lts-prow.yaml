@@ -71,6 +71,13 @@ jobs:
           kubectl create secret generic github-token -n test-pods --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID
           rm cert.pem
 
+      - name: 'Create job config'
+        run: |
+          envsubst < config/prow/release-branch-jobs/base.yaml > cm.yaml
+          envsubst < config/prow/release-branch-jobs/1.24.yaml >> cm.yaml
+          kubectl create configmap config -n prow --from-file=config.yaml=cm.yaml
+          rm cm.yaml
+
       - name: 'Apply Prowjob CRD'
         run: for f in config/prow/k8s/prowjob/*.yaml; do kubectl apply --server-side=true -f $f; done
 
