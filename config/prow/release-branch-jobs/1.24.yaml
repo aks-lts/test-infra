@@ -68,7 +68,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-gce
     labels:
       preset-dind-enabled: "true"
@@ -112,7 +111,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-gce-canary
     labels:
       preset-dind-enabled: "true"
@@ -160,7 +158,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-gce-ubuntu-containerd
     labels:
       preset-dind-enabled: "true"
@@ -214,7 +211,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-gce-ubuntu-containerd-canary
     labels:
       preset-k8s-ssh: "true"
@@ -311,7 +307,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-verify-govet-levee
     decorate: true
     labels:
@@ -393,7 +388,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-node-e2e-containerd
     labels:
       preset-k8s-ssh: "true"
@@ -475,7 +469,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-gce-100-performance
     decorate: true
     decoration_config:
@@ -555,7 +548,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-kubemark-e2e-gce-big
     decorate: true
     decoration_config:
@@ -633,7 +625,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-kubemark-e2e-gce-scale
     decorate: true
     decoration_config:
@@ -707,7 +698,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-conformance-kind-ipv6-parallel
     decorate: true
     labels:
@@ -747,7 +737,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-dependencies
     decorate: true
     labels:
@@ -779,7 +768,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-files-remake
     decorate: true
     name: pull-kubernetes-files-remake
@@ -806,7 +794,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-integration
     decorate: true
     labels:
@@ -836,7 +823,6 @@ presubmits:
       description: run with GO_VERSION set to the original go version used for this branch
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-integration-go-compatibility
     decorate: true
     labels:
@@ -868,7 +854,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-kind
     decorate: true
     decoration_config:
@@ -907,7 +892,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-kind-ipv6
     decorate: true
     decoration_config:
@@ -950,7 +934,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-conformance-kind-ga-only-parallel
     decorate: true
     decoration_config:
@@ -1014,7 +997,6 @@ presubmits:
       description: run with GO_VERSION set to the original go version used for this branch
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-unit-go-compatibility
     decorate: true
     labels:
@@ -1044,7 +1026,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-typecheck
     decorate: true
     name: pull-kubernetes-typecheck
@@ -1070,7 +1051,6 @@ presubmits:
   - always_run: false
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-update
     decorate: true
     labels:
@@ -1110,7 +1090,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-verify
     decorate: true
     labels:
