@@ -584,7 +584,7 @@ periodics:
         privileged: true
 postsubmits: {}
 presubmits:
-  kubernetes/kubernetes:
+  $GITHUB_ORG/$GITHUB_REPO:
   - always_run: false
     branches:
     - release-1.24
