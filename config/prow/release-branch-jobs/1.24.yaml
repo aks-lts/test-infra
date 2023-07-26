@@ -987,7 +987,6 @@ presubmits:
   - always_run: true
     branches:
     - release-1.24
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-unit
     decorate: true
     labels:
