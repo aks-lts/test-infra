@@ -839,11 +839,11 @@ presubmits:
         name: main
         resources:
           limits:
-            cpu: "5"
-            memory: 32Gi
+            cpu: "4"
+            memory: 8Gi
           requests:
-            cpu: "5"
-            memory: 32Gi
+            cpu: "2"
+            memory: 4Gi
   - always_run: false
     branches:
     - release-1.24
