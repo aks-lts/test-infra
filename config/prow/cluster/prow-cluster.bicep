@@ -2,7 +2,7 @@ param aks_cluster_region string = 'westus3'
 param aks_cluster_prefix string = 'aks-lts-prow'
 param system_vm_sku string = 'Standard_DS3_v2'
 param prow_vm_sku string = 'Standard_DS3_v2'
-param test_vm_sku string = 'Standard_D8s_v5'
+param test_vm_sku string = 'Standard_D16s_v5'
 param storage_account_prefix string = 'prow'
 
 resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
