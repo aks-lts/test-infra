@@ -747,7 +747,7 @@ presubmits:
         - runner.sh
         env:
         - name: GO_VERSION
-          value: 1.18.1
+          value: 1.19.1
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20230616-e730b60769-1.24
         name: ""
         resources:
@@ -805,7 +805,7 @@ presubmits:
         - test
         env:
         - name: GO_VERSION
-          value: 1.18.1
+          value: 1.19.1
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20230616-e730b60769-1.24
         name: ""
         resources:
