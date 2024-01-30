@@ -378,10 +378,10 @@ presubmits:
             resources:
               limits:
                 cpu: "4"
-                memory: 36Gi
+                memory: 8Gi
               requests:
-                cpu: "4"
-                memory: 36Gi
+                cpu: "2"
+                memory: 4Gi
         securityContext:
           runAsUser: 2000
     - always_run: true
