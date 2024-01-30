@@ -17,5 +17,5 @@ LTS specific configuration and tooling for testing
     - `AZURE_RG` (Existing Azure resource group to use for deployment, e.g. `aks-lts-prow`)
   * Required secrets:
     - `AZURE_CREDENTIALS` (output of `az ad sp create-for-rbac --role Contributor --sdk-auth --scope /subscriptions/$AZURE_SUBSCRIPTION/resourceGroups/$AZURE_RG`)
-    - `APP_PRIVATE_KEY` (private key for GitHub App- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app))
+    - `APP_PRIVATE_KEY` (private key for GitHub App- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app); make sure to use the private key and not the client secret)
     - `HMAC_TOKEN` (generate randomly via `openssl rand -hex 20` and also set in GitHub App, see [Create the GitHub secrets](https://docs.prow.k8s.io/docs/getting-started-deploy/#create-the-github-secrets))
