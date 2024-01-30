@@ -2,7 +2,6 @@ periodics:
   - annotations:
       testgrid-dashboards: conformance-all, conformance-gce, sig-release-job-config-errors
       testgrid-tab-name: Conformance - GCE - 1.25
-    cluster: k8s-infra-prow-build
     interval: 3h
     labels:
       preset-k8s-ssh: "true"
@@ -41,7 +40,6 @@ periodics:
       testgrid-dashboards: sig-release-1.25-blocking, google-gce
       testgrid-num-failures-to-alert: "6"
       testgrid-tab-name: gce-device-plugin-gpu-1.25
-    cluster: k8s-infra-prow-build
     cron: 0 14-23/24 * * *
     labels:
       preset-ci-gce-device-plugin-gpu: "true"
@@ -84,7 +82,6 @@ periodics:
       testgrid-dashboards: sig-instrumentation-tests, sig-testing-kind, sig-release-job-config-errors
       testgrid-num-columns-recent: "6"
       testgrid-tab-name: kind-json-logging-1.25
-    cluster: k8s-infra-prow-build
     decorate: true
     decoration_config:
       timeout: 2h30m0s
@@ -133,7 +130,6 @@ periodics:
       testgrid-alert-email: release-managers+alerts@kubernetes.io, release-team@kubernetes.io
       testgrid-dashboards: sig-release-1.25-blocking, sig-release-releng-blocking
       testgrid-tab-name: build-1.25
-    cluster: k8s-infra-prow-build
     decorate: true
     extra_refs:
       - base_ref: release-1.25
@@ -177,7 +173,6 @@ periodics:
       testgrid-dashboards: sig-scalability-kubemark, sig-release-job-config-errors
       testgrid-num-failures-to-alert: "2"
       testgrid-tab-name: kubemark-1.25-500
-    cluster: k8s-infra-prow-build
     cron: 0 21 * * *
     decorate: true
     decoration_config:
@@ -253,7 +248,6 @@ periodics:
       testgrid-dashboards: sig-release-1.25-blocking, sig-scalability-gce, google-gce, google-gci
       testgrid-num-failures-to-alert: "2"
       testgrid-tab-name: gce-cos-1.25-scalability-100
-    cluster: k8s-infra-prow-build
     cron: 0 8-20/24 * * *
     decorate: true
     decoration_config:
@@ -335,7 +329,6 @@ periodics:
       testgrid-alert-email: release-team@kubernetes.io
       testgrid-dashboards: sig-release-1.25-blocking
       testgrid-tab-name: integration-1.25
-    cluster: k8s-infra-prow-build
     decorate: true
     extra_refs:
       - base_ref: release-1.25
@@ -374,7 +367,6 @@ periodics:
       testgrid-dashboards: sig-release-1.25-blocking
       testgrid-days-of-results: "1"
       testgrid-num-failures-to-alert: "3"
-    cluster: k8s-infra-prow-build
     decorate: true
     extra_refs:
       - base_ref: release-1.25
@@ -404,7 +396,6 @@ periodics:
       testgrid-alert-email: kubernetes-sig-testing-alerts@googlegroups.com, k8s-infra-oncall@google.com, release-managers+alerts@kubernetes.io
       testgrid-dashboards: sig-release-1.25-blocking
       testgrid-tab-name: verify-1.25
-    cluster: k8s-infra-prow-build
     decorate: true
     extra_refs:
       - base_ref: release-1.25
@@ -449,7 +440,6 @@ periodics:
       testgrid-dashboards: sig-release-1.25-blocking, sig-testing-kind
       testgrid-num-columns-recent: "6"
       testgrid-tab-name: kind-1.25-parallel
-    cluster: k8s-infra-prow-build
     decorate: true
     decoration_config:
       timeout: 1h0m0s
@@ -494,7 +484,6 @@ periodics:
       testgrid-dashboards: sig-release-1.25-blocking, sig-testing-kind
       testgrid-num-columns-recent: "6"
       testgrid-tab-name: kind-ipv6-1.25-parallel
-    cluster: k8s-infra-prow-build
     decorate: true
     decoration_config:
       timeout: 1h0m0s
@@ -544,7 +533,6 @@ presubmits:
       branches:
         - release-1.25
         - release-1.25-lts
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-gce
       labels:
         preset-dind-enabled: "true"
@@ -594,7 +582,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-gce-canary
       labels:
         preset-dind-enabled: "true"
@@ -647,7 +634,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-gce-ubuntu-containerd
       labels:
         preset-dind-enabled: "true"
@@ -706,7 +692,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-gce-ubuntu-containerd-canary
       labels:
         preset-k8s-ssh: "true"
@@ -764,7 +749,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-gce-ubuntu-containerd-serial
       labels:
         preset-dind-enabled: "true"
@@ -871,7 +855,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-verify-govet-levee
       decorate: true
       labels:
@@ -958,7 +941,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-node-e2e-containerd
       labels:
         preset-k8s-ssh: "true"
@@ -1043,7 +1025,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-gce-100-performance
       decorate: true
       decoration_config:
@@ -1124,7 +1105,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-kubemark-e2e-gce-big
       decorate: true
       decoration_config:
@@ -1203,7 +1183,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-kubemark-e2e-gce-scale
       decorate: true
       decoration_config:
@@ -1277,7 +1256,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-conformance-kind-ipv6-parallel
       decorate: true
       labels:
@@ -1317,7 +1295,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-dependencies
       decorate: true
       labels:
@@ -1353,7 +1330,6 @@ presubmits:
         testgrid-num-failures-to-alert: "10"
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-files-remake
       decorate: true
       name: pull-kubernetes-files-remake
@@ -1380,7 +1356,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-integration
       decorate: true
       labels:
@@ -1410,7 +1385,6 @@ presubmits:
         description: run with GO_VERSION set to the original go version used for this branch
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-integration-go-compatibility
       decorate: true
       labels:
@@ -1441,7 +1415,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-kind
       decorate: true
       decoration_config:
@@ -1480,7 +1453,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-e2e-kind-ipv6
       decorate: true
       decoration_config:
@@ -1523,7 +1495,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-conformance-kind-ga-only-parallel
       decorate: true
       decoration_config:
@@ -1560,7 +1531,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-unit
       decorate: true
       labels:
@@ -1588,7 +1558,6 @@ presubmits:
         description: run with GO_VERSION set to the original go version used for this branch
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-unit-go-compatibility
       decorate: true
       labels:
@@ -1617,7 +1586,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-typecheck
       decorate: true
       name: pull-kubernetes-typecheck
@@ -1643,7 +1611,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-update
       decorate: true
       labels:
@@ -1683,7 +1650,6 @@ presubmits:
     - always_run: true
       branches:
         - release-1.25
-      cluster: k8s-infra-prow-build
       context: pull-kubernetes-verify
       decorate: true
       labels:
