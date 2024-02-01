@@ -31,11 +31,11 @@ LTS specific configuration and tooling for testing
     - Remove all tests for a repo other than `kubernetes/kubernetes`, for example `kubernetes/perf-tests`
     - Replace `kubernetes/kubernetes` with `$GITHUB_ORG/$GITHUB_REPO`
     - Remove all the `cluster: ...` rows (`sed -i '' '/cluster: /d' <version>.yaml`)
-    - Remove all tests with --provider=gce
+    - Remove all tests with `--provider=gce`
     - In the `branches:` sections of the remaining jobs, make sure they contain the name of the LTS branch you want tests to run on (typically `release-<version>-lts`)
     - Push these changes to a branch and run the [Deploy AKS LTS Prow](https://github.com/aks-lts/test-infra/actions/workflows/deploy-lts-prow.yaml) workflow
       for that branch (click "Run workflow" and select your branch). Make sure it succeeds.
-    - Create a test PR on the [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) repo. Make sure it targets the desired branach (`release-<version>-lts`).
+    - Create a test PR on the [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) repo. Make sure it targets the desired branch (`release-<version>-lts`).
       Check if the tests run and succeed.
     - If tests don't run or fail, check https://aka.ms/aks/prow. Some of them might need additional tweaking, e.g. request less CPU/memory 
     - Once all is looking good, remember to merge the PR on this repo.
