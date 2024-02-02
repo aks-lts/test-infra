@@ -44,49 +44,6 @@ presubmits:
     - always_run: false
       branches:
         - release-1.25-lts
-      context: pull-kubernetes-node-e2e-containerd-kubetest2
-      decorate: true
-      decoration_config:
-        timeout: 1h5m0s
-      extra_refs:
-        - base_ref: master
-          org: kubernetes
-          path_alias: k8s.io/test-infra
-          repo: test-infra
-      labels:
-        preset-k8s-ssh: "true"
-        preset-service-account: "true"
-      name: pull-kubernetes-node-e2e-containerd-kubetest2
-      optional: true
-      path_alias: k8s.io/kubernetes
-      spec:
-        containers:
-          - args:
-              - kubetest2
-              - noop
-              - --test=node
-              - --
-              - --repo-root=.
-              - --gcp-zone=us-west1-b
-              - --parallelism=8
-              - --focus-regex=\[NodeConformance\]
-              - --skip-regex=\[Flaky\]|\[Slow\]|\[Serial\]
-              - '--test-args=--container-runtime-endpoint=unix:///run/containerd/containerd.sock --container-runtime-process-name=/usr/bin/containerd --container-runtime-pid-file= --kubelet-flags="--cgroups-per-qos=true --cgroup-root=/ --runtime-cgroups=/system.slice/containerd.service" --extra-log="{\"name\": \"containerd.log\", \"journalctl\": [\"-u\", \"containerd*\"]}"'
-              - --image-config-file=/home/prow/go/src/k8s.io/test-infra/jobs/e2e_node/containerd/image-config.yaml
-            command:
-              - runner.sh
-            image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20231117-8a628a317a-experimental
-            name: ""
-            resources:
-              limits:
-                cpu: "4"
-                memory: 8Gi
-              requests:
-                cpu: "2"
-                memory: 4Gi
-    - always_run: false
-      branches:
-        - release-1.25-lts
       context: pull-kubernetes-conformance-kind-ipv6-parallel
       decorate: true
       labels:
