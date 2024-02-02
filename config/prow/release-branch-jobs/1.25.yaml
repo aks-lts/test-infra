@@ -34,11 +34,11 @@ presubmits:
             name: ""
             resources:
               limits:
-                cpu: "7"
-                memory: 12Gi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: "7"
-                memory: 12Gi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: false
@@ -80,10 +80,10 @@ presubmits:
             resources:
               limits:
                 cpu: "4"
-                memory: 6Gi
+                memory: 8Gi
               requests:
-                cpu: "4"
-                memory: 6Gi
+                cpu: "2"
+                memory: 4Gi
     - always_run: false
       branches:
         - release-1.25-lts
@@ -117,10 +117,10 @@ presubmits:
             resources:
               limits:
                 cpu: "4"
-                memory: 9000Mi
+                memory: 8Gi
               requests:
-                cpu: "4"
-                memory: 9000Mi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: true
@@ -147,11 +147,11 @@ presubmits:
             name: main
             resources:
               limits:
-                cpu: "2"
-                memory: 1288490188800m
+                cpu: "4"
+                memory: 8Gi
               requests:
                 cpu: "2"
-                memory: 1288490188800m
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: false
@@ -179,11 +179,11 @@ presubmits:
             name: main
             resources:
               limits:
-                cpu: 1500m
-                memory: 7Gi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: 1500m
-                memory: 7Gi
+                cpu: "2"
+                memory: 4Gi
     - always_run: true
       branches:
         - release-1.25-lts
@@ -204,11 +204,11 @@ presubmits:
             name: ""
             resources:
               limits:
-                cpu: "6"
-                memory: 15Gi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: "6"
-                memory: 15Gi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: true
@@ -236,11 +236,11 @@ presubmits:
             name: ""
             resources:
               limits:
-                cpu: "6"
-                memory: 15Gi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: "6"
-                memory: 15Gi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: true
@@ -274,11 +274,11 @@ presubmits:
             name: ""
             resources:
               limits:
-                cpu: "7"
-                memory: 9000Mi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: "7"
-                memory: 9000Mi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: true
@@ -317,10 +317,10 @@ presubmits:
             resources:
               limits:
                 cpu: "4"
-                memory: 9Gi
+                memory: 8Gi
               requests:
-                cpu: "4"
-                memory: 9Gi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: true
@@ -353,10 +353,10 @@ presubmits:
             resources:
               limits:
                 cpu: "4"
-                memory: 9Gi
+                memory: 8Gi
               requests:
-                cpu: "4"
-                memory: 9Gi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: true
@@ -408,10 +408,10 @@ presubmits:
             resources:
               limits:
                 cpu: "4"
-                memory: 36Gi
+                memory: 8Gi
               requests:
-                cpu: "4"
-                memory: 36Gi
+                cpu: "2"
+                memory: 4Gi
         securityContext:
           runAsUser: 2000
     - always_run: true
@@ -434,11 +434,11 @@ presubmits:
             name: main
             resources:
               limits:
-                cpu: "5"
-                memory: 32Gi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: "5"
-                memory: 32Gi
+                cpu: "2"
+                memory: 4Gi
     - always_run: false
       branches:
         - release-1.25-lts
@@ -471,11 +471,11 @@ presubmits:
             name: ""
             resources:
               limits:
-                cpu: "7"
-                memory: 12Gi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: "7"
-                memory: 12Gi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
     - always_run: true
@@ -510,10 +510,10 @@ presubmits:
             name: ""
             resources:
               limits:
-                cpu: "7"
-                memory: 12Gi
+                cpu: "4"
+                memory: 8Gi
               requests:
-                cpu: "7"
-                memory: 12Gi
+                cpu: "2"
+                memory: 4Gi
             securityContext:
               privileged: true
