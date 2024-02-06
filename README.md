@@ -17,5 +17,25 @@ LTS specific configuration and tooling for testing
     - `AZURE_RG` (Existing Azure resource group to use for deployment, e.g. `aks-lts-prow`)
   * Required secrets:
     - `AZURE_CREDENTIALS` (output of `az ad sp create-for-rbac --role Contributor --sdk-auth --scope /subscriptions/$AZURE_SUBSCRIPTION/resourceGroups/$AZURE_RG`)
-    - `APP_PRIVATE_KEY` (private key for GitHub App- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app))
+    - `APP_PRIVATE_KEY` (private key for GitHub App- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app); make sure to use the private key and not the client secret)
     - `HMAC_TOKEN` (generate randomly via `openssl rand -hex 20` and also set in GitHub App, see [Create the GitHub secrets](https://docs.prow.k8s.io/docs/getting-started-deploy/#create-the-github-secrets))
+  * Prow jobs for each K8S release need to be added manually:
+    - For an example, see https://github.com/aks-lts/test-infra/pull/9
+    - Create a new config file `config/prow/release-branch-jobs/<version>.yaml`
+    - Add a new line to the `Create job configs step` in `.github/workflows/deploy-lts-prow.yaml` 
+      (follow the existing pattern, i.e. `envsubst < config/prow/release-branch-jobs/<version>.yaml >> cm.yaml`)
+    - Go to the [kubernetes/test-infra](https://github.com/kubernetes/test-infra) repo and find the config file they use
+      for that version under [config/jobs/kubernetes/sig-release/release-branch-jobs](https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes/sig-release/release-branch-jobs). 
+      It might have been deleted already (when that version went out of support), so inspect the history of that folder and find the last version right before deletion.
+    - Copy only the `presubmits:` section of that file to the new config file you created (`config/prow/release-branch-jobs/<version>.yaml`)
+    - Remove all tests for a repo other than `kubernetes/kubernetes`, for example `kubernetes/perf-tests`
+    - Replace `kubernetes/kubernetes` with `$GITHUB_ORG/$GITHUB_REPO`
+    - Remove all the `cluster: ...` rows (`sed -i '' '/cluster: /d' <version>.yaml`)
+    - Remove all tests with `--provider=gce`
+    - In the `branches:` sections of the remaining jobs, make sure they contain the name of the LTS branch you want tests to run on (typically `release-<version>-lts`)
+    - Push these changes to a branch and run the [Deploy AKS LTS Prow](https://github.com/aks-lts/test-infra/actions/workflows/deploy-lts-prow.yaml) workflow
+      for that branch (click "Run workflow" and select your branch). Make sure it succeeds.
+    - Create a test PR on the [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) repo. Make sure it targets the desired branch (`release-<version>-lts`).
+      Check if the tests run and succeed.
+    - If tests don't run or fail, check https://aka.ms/aks/prow. Some of them might need additional tweaking, e.g. request less CPU/memory 
+    - Once all is looking good, remember to merge the PR on this repo.
