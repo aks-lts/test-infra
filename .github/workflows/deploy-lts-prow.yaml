@@ -9,6 +9,7 @@ permissions:
 jobs:
   Deploy_AKS_LTS_Prow:
     runs-on: ubuntu-latest
+    environment: production
     env:
       GITHUB_APP_ID: ${{ vars.APP_ID }}
       GITHUB_ORG: ${{ vars.ORG }}
