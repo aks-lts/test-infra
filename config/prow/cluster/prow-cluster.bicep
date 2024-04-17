@@ -97,7 +97,7 @@ resource clusteraccesspip 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   scope: ingresspip
   properties: {
     roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c' // contributor
-    principalId: aks.properties.servicePrincipalProfile.clientId
+    principalId: aks.identity.principalId
     principalType: 'ServicePrincipal'
     description: 'Allow aks cloud-provider to manage the public IP address'
   }
