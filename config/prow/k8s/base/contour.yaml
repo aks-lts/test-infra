@@ -7774,13 +7774,10 @@ metadata:
   name: envoy
   namespace: projectcontour
   annotations:
-    # This annotation puts the AWS ELB into "TCP" mode so that it does not
-    # do HTTP negotiation for HTTPS connections at the ELB edge.
-    # The downside of this is the remote IP address of all connections will
-    # appear to be the internal address of the ELB. See docs/proxy-proto.md
-    # for information about enabling the PROXY protocol on the ELB to recover
-    # the original remote IP address.
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+    # Manual edit here, it doesn't work with create first and then put annotation
+    # these annotation has to be present at the time of creation
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: $AZURE_RG
+    service.beta.kubernetes.io/azure-pip-name: $PUBLIC_IP_NAME
 spec:
   externalTrafficPolicy: Local
   ports:
