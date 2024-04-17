@@ -66,7 +66,12 @@ jobs:
           admin: true
 
       - name: 'Apply Prow base manifests'
-        run: for f in config/prow/k8s/base/*.yaml; do kubectl apply -f $f; done
+        run: |
+          kubectl apply -f config/prow/k8s/base/ns.yaml
+          envsubst < config/prow/k8s/base/contour.yaml > contour.yaml
+          kubectl apply -f contour.yaml
+        env:
+          AZURE_RG: ${{ vars.AZURE_RG }}
 
       - name: 'Create GitHub Token secrets'
         run: |
