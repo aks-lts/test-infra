@@ -92,6 +92,17 @@ resource ingresspip 'Microsoft.Network/publicIPAddresses@2022-11-01' = {
   }
 }
 
+resource clusteraccesspip 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('storage-rbac', aks.id, ingresspip.id)
+  scope: ingresspip
+  properties: {
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c' // contributor
+    principalId: aks.identity.principalId
+    principalType: 'ServicePrincipal'
+    description: 'Allow aks cloud-provider to manage the public IP address'
+  }
+}
+
 resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: '${storage_account_prefix}${uniqueString(resourceGroup().id, aks_cluster_region)}'
   location: aks_cluster_region
