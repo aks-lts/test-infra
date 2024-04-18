@@ -1,15 +1,4 @@
-periodics:
-- interval: 24h
-  agent: kubernetes
-  name: echo-test
-  namespace: test-pods
-  spec:
-    containers:
-      - image: alpine
-        command: ["/bin/date"]
-postsubmits: {}
-presubmits:
-  $GITHUB_ORG/$GITHUB_REPO:
+  # 1.24-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml  
   - always_run: true
     branches:
     - release-1.24-lts
