@@ -69,3 +69,16 @@ tide:
         - $GITHUB_ORG
 
 decorate_all_jobs: true
+
+periodics:
+- interval: 24h
+  agent: kubernetes
+  name: echo-test
+  namespace: test-pods
+  spec:
+    containers:
+      - image: alpine
+        command: ["/bin/date"]
+postsubmits: {}
+presubmits:
+  $GITHUB_ORG/$GITHUB_REPO:
