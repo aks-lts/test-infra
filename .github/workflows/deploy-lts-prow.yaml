@@ -53,9 +53,6 @@ jobs:
           PUBLIC_IP_NAME=${{ steps.bicep.outputs.publicIpName }}
           echo "::add-mask::$PUBLIC_IP_NAME"
           echo "PUBLIC_IP_NAME=$PUBLIC_IP_NAME" >> "$GITHUB_ENV"
-          PUBLIC_IP_ADDRESS=${{ steps.bicep.outputs.publicIpAddress }}
-          echo "::add-mask::$PUBLIC_IP_ADDRESS"
-          echo "PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS" >> "$GITHUB_ENV"
           
       - name: Fetch storage key
         id: fetch-storage-key
@@ -63,6 +60,9 @@ jobs:
           AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
           echo "::add-mask::$AZURE_STORAGE_ACCOUNT_PASSWORD"
           echo "AZURE_STORAGE_ACCOUNT_PASSWORD=$AZURE_STORAGE_ACCOUNT_PASSWORD" >> "$GITHUB_ENV"
+          PUBLIC_IP_ADDRESS=$(az network public-ip show -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.publicIpName }} | jq -r '.ipAddress')
+          echo "::add-mask::$PUBLIC_IP_ADDRESS"
+          echo "PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
