@@ -20,7 +20,9 @@ jobs:
       KUBEKINS_E2E_TAG: v20230703-e6ae5b372a-master
     steps:
       - name: Generate fake mount secret
-        run: echo FAKE_MOUNT_SECRET=$(echo '{"account":"fake","password":"fake"}' | base64) >> "$GITHUB_ENV"
+        run: |
+          echo "::add-mask::$FAKE_MOUNT_SECRET"
+          echo FAKE_MOUNT_SECRET=$(echo '{"account":"fake","password":"fake"}' | base64) >> "$GITHUB_ENV"
 
       - name: Check out repo
         uses: actions/checkout@v3
@@ -44,8 +46,11 @@ jobs:
       - name: Fetch config
         run: |
           echo "PROW_HOST=${{ steps.bicep.outputs.prowHostName }}" >> "$GITHUB_ENV"
+          echo "::add-mask::$AZURE_STORAGE_ACCOUNT_USER"
           echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
+          echo "::add-mask::$PUBLIC_IP_NAME"
           echo "PUBLIC_IP_NAME=${{ steps.bicep.outputs.publicIpName }}" >> "$GITHUB_ENV"
+          echo "::add-mask::$PUBLIC_IP_ADDRESS"
           echo "PUBLIC_IP_ADDRESS=${{ steps.bicep.outputs.publicIpAddress }}" >> "$GITHUB_ENV"
           
       - name: Fetch storage key
