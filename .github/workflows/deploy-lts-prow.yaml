@@ -90,6 +90,7 @@ jobs:
           envsubst < config/prow/release-branch-jobs/base.yaml > cm.yaml
           envsubst < config/prow/release-branch-jobs/1.24.yaml >> cm.yaml
           envsubst < config/prow/release-branch-jobs/1.25.yaml >> cm.yaml
+          envsubst < config/prow/release-branch-jobs/1.26.yaml >> cm.yaml
           kubectl create configmap config -n prow --from-file=config.yaml=cm.yaml -o yaml --dry-run=client | kubectl apply -f -
           rm cm.yaml
 
