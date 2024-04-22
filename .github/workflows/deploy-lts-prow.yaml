@@ -47,22 +47,8 @@ jobs:
       - name: Fetch config
         run: |
           echo "PROW_HOST=${{ steps.bicep.outputs.prowHostName }}" >> "$GITHUB_ENV"
-          AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}
-          echo "::add-mask::$AZURE_STORAGE_ACCOUNT_USER"
-          echo "AZURE_STORAGE_ACCOUNT_USER=$AZURE_STORAGE_ACCOUNT_USER" >> "$GITHUB_ENV"
-          PUBLIC_IP_NAME=${{ steps.bicep.outputs.publicIpName }}
-          echo "::add-mask::$PUBLIC_IP_NAME"
-          echo "PUBLIC_IP_NAME=$PUBLIC_IP_NAME" >> "$GITHUB_ENV"
-          
-      - name: Fetch storage key
-        id: fetch-storage-key
-        run: |
-          AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
-          echo "::add-mask::$AZURE_STORAGE_ACCOUNT_PASSWORD"
-          echo "AZURE_STORAGE_ACCOUNT_PASSWORD=$AZURE_STORAGE_ACCOUNT_PASSWORD" >> "$GITHUB_ENV"
-          PUBLIC_IP_ADDRESS=$(az network public-ip show -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.publicIpName }} | jq -r '.ipAddress')
-          echo "::add-mask::$PUBLIC_IP_ADDRESS"
-          echo "PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS" >> "$GITHUB_ENV"
+          echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
+          echo "PUBLIC_IP_NAME=${{ steps.bicep.outputs.publicIpName }}" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
@@ -88,6 +74,16 @@ jobs:
           kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID -o yaml --dry-run=client | kubectl apply -f -
           kubectl create secret generic github-token -n test-pods --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID -o yaml --dry-run=client | kubectl apply -f -
           rm cert.pem
+
+      - name: Fetch storage key
+        id: fetch-storage-key
+        run: |
+          AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
+          echo "::add-mask::$AZURE_STORAGE_ACCOUNT_PASSWORD"
+          echo "AZURE_STORAGE_ACCOUNT_PASSWORD=$AZURE_STORAGE_ACCOUNT_PASSWORD" >> "$GITHUB_ENV"
+          PUBLIC_IP_ADDRESS=$(az network public-ip show -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.publicIpName }} | jq -r '.ipAddress')
+          echo "::add-mask::$PUBLIC_IP_ADDRESS"
+          echo "PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS" >> "$GITHUB_ENV"
 
       - name: 'Create job configs'
         run: |
