@@ -1,0 +1,326 @@
+  # 1.27-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-dependencies
+    decorate: true
+    labels:
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
+    name: pull-kubernetes-dependencies
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - make
+            - verify
+          command:
+            - runner.sh
+          env:
+            - name: WHAT
+              value: external-dependencies-version vendor vendor-licenses
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: main
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-verify
+    decorate: true
+    labels:
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
+    name: pull-kubernetes-verify
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - ./hack/jenkins/verify-dockerized.sh
+          command:
+            - runner.sh
+          env:
+            - name: EXCLUDE_TYPECHECK
+              value: "y"
+            - name: EXCLUDE_FILES_REMAKE
+              value: "y"
+            - name: EXCLUDE_GODEP
+              value: "y"
+            - name: KUBE_VERIFY_GIT_BRANCH
+              value: release-1.25-lts
+            - name: REPO_DIR
+              value: /workspace/k8s.io/kubernetes
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          imagePullPolicy: Always
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-conformance-kind-ga-only-parallel
+    decorate: true
+    decoration_config:
+      grace_period: 15m0s
+      timeout: 1h0m0s
+    labels:
+      preset-dind-enabled: "true"
+      preset-kind-volume-mounts: "true"
+    name: pull-kubernetes-conformance-kind-ga-only-parallel
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - command:
+            - wrapper.sh
+            - bash
+            - -c
+            - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
+          env:
+            - name: GA_ONLY
+              value: "true"
+            - name: PARALLEL
+              value: "true"
+          image: gcr.io/k8s-staging-test-infra/krte:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-e2e-kind
+    decorate: true
+    decoration_config:
+      grace_period: 15m0s
+      timeout: 1h0m0s
+    labels:
+      preset-dind-enabled: "true"
+      preset-kind-volume-mounts: "true"
+    name: pull-kubernetes-e2e-kind
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - command:
+            - wrapper.sh
+            - bash
+            - -c
+            - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
+          env:
+            - name: FOCUS
+              value: .
+            - name: SKIP
+              value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|PodSecurityPolicy|LoadBalancer|load.balancer|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing|NFS|nfs|inline.execution.and.attach|should.be.rejected.when.no.endpoints.exist
+            - name: PARALLEL
+              value: "true"
+          image: gcr.io/k8s-staging-test-infra/krte:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-e2e-kind-ipv6
+    decorate: true
+    decoration_config:
+      grace_period: 15m0s
+      timeout: 1h0m0s
+    labels:
+      preset-dind-enabled: "true"
+      preset-kind-volume-mounts: "true"
+    name: pull-kubernetes-e2e-kind-ipv6
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - command:
+            - wrapper.sh
+            - bash
+            - -c
+            - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
+          env:
+            - name: FOCUS
+              value: .
+            - name: SKIP
+              value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|\[sig-storage\]|PodSecurityPolicy|LoadBalancer|load.balancer|In-tree.Volumes.\[Driver:.nfs\]|PersistentVolumes.NFS|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing
+            - name: PARALLEL
+              value: "true"
+            - name: DOCKER_IN_DOCKER_IPV6_ENABLED
+              value: "true"
+            - name: IP_FAMILY
+              value: ipv6
+          image: gcr.io/k8s-staging-test-infra/krte:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-integration
+    decorate: true
+    labels:
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
+    name: pull-kubernetes-integration
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - ./hack/jenkins/test-dockerized.sh
+          command:
+            - runner.sh
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    annotations:
+      description: run with GO_VERSION set to the original go version used for this branch
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-integration-go-compatibility
+    decorate: true
+    labels:
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
+    name: pull-kubernetes-integration-go-compatibility
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - ./hack/jenkins/test-dockerized.sh
+          command:
+            - runner.sh
+          env:
+            - name: GO_VERSION
+              value: 1.20.2
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-typecheck
+    decorate: true
+    name: pull-kubernetes-typecheck
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - verify
+          command:
+            - make
+          env:
+            - name: WHAT
+              value: typecheck typecheck-providerless
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: main
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-unit
+    decorate: true
+    labels:
+      preset-service-account: "true"
+    name: pull-kubernetes-unit
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - command:
+            - make
+            - test
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+      securityContext:
+        runAsUser: 2000
+  - always_run: true
+    annotations:
+      description: run with GO_VERSION set to the original go version used for this branch
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-unit-go-compatibility
+    decorate: true
+    labels:
+      preset-service-account: "true"
+    name: pull-kubernetes-unit-go-compatibility
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - command:
+            - make
+            - test
+          env:
+            - name: GO_VERSION
+              value: 1.20.2
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+      securityContext:
+        runAsUser: 2000
