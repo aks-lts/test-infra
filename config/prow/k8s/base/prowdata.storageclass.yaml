@@ -4,7 +4,7 @@ metadata:
   name: prowdata
 provisioner: blob.csi.azure.com
 parameters:
-  resourceGroup: haitao
+  resourceGroup: $CLUSTER_RG
   storageAccount: $AZURE_STORAGE_ACCOUNT_USER
 reclaimPolicy: Retain  # if set as "Delete" container would be removed after pvc deletion
 volumeBindingMode: Immediate
