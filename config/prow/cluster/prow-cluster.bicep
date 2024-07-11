@@ -152,6 +152,17 @@ module clusterIngressFrontDoor 'prow-frontdoor.bicep' = {
   }
 }
 
+resource storageContributorPermission 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('storage-rbac', aks.id, sa.id)
+  scope: sa
+  properties: {
+    roleDefinitionId: subscriptionResourceId(subscription().subscriptionId, 'Microsoft.Authorization/roleDefinitions', '17d1049b-9a84-46fb-8f53-869881c3d3ab') // Storage Account Contributor
+    principalId: aks.identity.principalId
+    principalType: 'ServicePrincipal'
+    description: 'Allow aks cloud-provider to manage the storage account'
+  }
+}
+
 output aksClusterName string = aks.name
 output resourceGroupName string = resourceGroup().name
 output publicIpAddress string = ingresspip.properties.ipAddress
