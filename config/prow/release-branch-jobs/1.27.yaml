@@ -1,0 +1,117 @@
+
+  # 1.27-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-dependencies
+    decorate: true
+    labels:
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
+    name: pull-kubernetes-dependencies
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - make
+            - verify
+          command:
+            - runner.sh
+          env:
+            - name: WHAT
+              value: external-dependencies-version vendor vendor-licenses
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: main
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-integration
+    decorate: true
+    labels:
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
+    name: pull-kubernetes-integration
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - ./hack/jenkins/test-dockerized.sh
+          command:
+            - runner.sh
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    annotations:
+      description: run with GO_VERSION set to the original go version used for this branch
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-integration-go-compatibility
+    decorate: true
+    labels:
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
+    name: pull-kubernetes-integration-go-compatibility
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - args:
+            - ./hack/jenkins/test-dockerized.sh
+          command:
+            - runner.sh
+          env:
+            - name: GO_VERSION
+              value: 1.20.2
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            privileged: true
+  - always_run: true
+    branches:
+      - release-1.27-lts
+    context: pull-kubernetes-unit
+    decorate: true
+    labels:
+      preset-service-account: "true"
+    name: pull-kubernetes-unit
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+        - command:
+            - make
+            - test
+          image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+          name: ""
+          resources:
+            limits:
+              cpu: "4"
+              memory: 8Gi
+            requests:
+              cpu: "2"
+              memory: 4Gi
+      securityContext:
+        runAsUser: 2000
