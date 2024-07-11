@@ -76,6 +76,20 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
       managed: true
       enableAzureRBAC: false
     }
+    storageProfile: {
+      diskCSIDriver: {
+        enabled: false
+      }
+      snapshotController: {
+        enabled: false
+      }
+      fileCSIDriver: {
+        enabled: false
+      }
+      blobCSIDriver: {
+        enabled: true
+      }
+    }
   }
 }
 

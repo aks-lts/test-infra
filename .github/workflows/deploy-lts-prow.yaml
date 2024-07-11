@@ -65,6 +65,8 @@ jobs:
           kubectl apply -f config/prow/k8s/base/ns.yaml
           envsubst < config/prow/k8s/base/contour.yaml > contour.yaml
           kubectl apply -f contour.yaml
+          envsubst < config/prow/k8s/base/prowdata.storageclass.yaml > prowdata.storageclass.yaml
+          kubectl apply -f prowdata.storageclass.yaml
         env:
           AZURE_RG: ${{ vars.AZURE_RG }}
 
