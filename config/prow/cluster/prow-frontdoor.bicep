@@ -15,7 +15,7 @@ resource clusterIngressFrontdoor 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
 
 resource azureProwEndpoint 'Microsoft.Cdn/profiles/afdendpoints@2022-11-01-preview' = {
   parent: clusterIngressFrontdoor
-  name: 'aksltsprow'
+  name: 'ltsprow-${uniqueString(resourceGroup().id, location)}'
   location: 'Global'
   properties: {
     enabledState: 'Enabled'
