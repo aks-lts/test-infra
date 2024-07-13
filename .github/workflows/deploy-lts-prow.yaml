@@ -39,7 +39,7 @@ jobs:
         id: bicep
         uses: azure/arm-deploy@v1
         with:
-          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION }}
+          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
           failOnStdErr: false
