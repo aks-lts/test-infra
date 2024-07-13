@@ -7,3 +7,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: test-pods
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minio4prow

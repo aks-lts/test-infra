@@ -76,7 +76,7 @@ metadata:
   labels:
     v1.min.io/tenant: prowdata
   name: prowdata-env-configuration
-  namespace: prows3
+  namespace: minio4prow
 data:
   config.env: |
     export MINIO_ROOT_USER=""
@@ -91,7 +91,7 @@ metadata:
   labels:
     v1.min.io/tenant: prowdata
   name: prowdata-secret
-  namespace: prows3
+  namespace: minio4prow
 type: Opaque
 data:
   accesskey: ""
@@ -104,7 +104,7 @@ metadata:
   labels:
     v1.min.io/tenant: prowdata
   name: prowdata-user-0
-  namespace: prows3
+  namespace: minio4prow
 type: Opaque
 immutable: true
 data:
