@@ -52,8 +52,8 @@ spec:
       fsGroupChangePolicy: Always
       runAsGroup: 0
       runAsNonRoot: false
-      runAsUser: 0
-    servers: 2
+      runAsUser: 0 # or it hit this error: Drive is not writable http://prowdata-pool-0-0.prowdata-hl.prow.svc.cluster.local:9000/export1, Run the following command to add write permissions: `sudo chown -R <your-username> /export1 && sudo chmod u+rxw /export1` (*errors.errorString)
+    servers: 1 # all data is on same blob storage, having multiple server multiple volume would just duplicate the same data on same blob storage
     volumeClaimTemplate:
       metadata:
         name: data
@@ -65,7 +65,7 @@ spec:
             storage: "274877906944"
         storageClassName: prowdata
       status: {}
-    volumesPerServer: 2
+    volumesPerServer: 1
   requestAutoCert: false
   users:
   - name: prowdata-user-0
