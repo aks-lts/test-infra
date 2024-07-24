@@ -1,9 +1,10 @@
 name: Deploy AKS LTS Prow
 on:
   workflow_dispatch:
-    deployEnv:
-      logLevel:
-        description: 'Environment to deploy to'
+    inputs:
+      deployEnv:
+        description: 'Environment to run against'
+        type: environment
         required: true
 permissions:
   id-token: write
