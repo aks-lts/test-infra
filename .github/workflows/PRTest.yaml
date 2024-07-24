@@ -8,6 +8,6 @@ permissions:
   contents: read
 jobs:
   deploy-aks-lts-prow-PRTest:
-    uses: .github/workflows/deploy-lts-prow.yml
+    uses: ./.github/workflows/deploy-lts-prow.yml
     with:
       deployEnv: PRTest
