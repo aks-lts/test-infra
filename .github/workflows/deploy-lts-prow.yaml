@@ -26,7 +26,7 @@ jobs:
           echo "FAKE_MOUNT_SECRET=$FAKE_MOUNT_SECRET" >> "$GITHUB_ENV"
 
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Azure login
         uses: azure/login@v2
@@ -37,7 +37,7 @@ jobs:
 
       - name: Deploy Prow cluster Bicep
         id: bicep
-        uses: azure/arm-deploy@v1
+        uses: azure/arm-deploy@v2
         with:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION }}
           resourceGroupName: ${{ vars.AZURE_RG }}
@@ -52,10 +52,10 @@ jobs:
           echo "CLUSTER_RG=${{ steps.bicep.outputs.resourceGroupName }}" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
-        uses: azure/setup-kubectl@v3
+        uses: azure/setup-kubectl@v4
 
       - name: Set AKS cluster context
-        uses: azure/aks-set-context@v3
+        uses: azure/aks-set-context@v4
         with:
           resource-group: ${{ vars.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
