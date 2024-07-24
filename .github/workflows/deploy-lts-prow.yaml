@@ -6,6 +6,7 @@ on:
         description: 'Environment to run against'
         type: environment
         required: true
+    secrets: inherit
 permissions:
   id-token: write
   contents: read
