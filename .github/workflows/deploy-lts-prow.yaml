@@ -1,15 +1,17 @@
 name: Deploy AKS LTS Prow
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      deployEnv:
+        required: true  # Specifies that this input is mandatory
+        type: string  # Specifies the type of the input
 permissions:
   id-token: write
   contents: read
 jobs:
   Deploy_AKS_LTS_Prow:
     runs-on: ubuntu-latest
-    environment: PRTest
+    environment:  ${{ vars.deployEnv }
     env:
       GITHUB_APP_ID: ${{ vars.APP_ID }}
       GITHUB_ORG: ${{ vars.ORG }}
