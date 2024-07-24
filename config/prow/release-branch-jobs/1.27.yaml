@@ -115,3 +115,59 @@
               memory: 4Gi
       securityContext:
         runAsUser: 2000
+  - always_run: true
+    branches:
+    - release-1.27-lts
+    context: pull-kubernetes-typecheck
+    decorate: true
+    name: pull-kubernetes-typecheck
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+      - args:
+        - verify
+        command:
+        - make
+        env:
+        - name: WHAT
+          value: typecheck typecheck-providerless
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+        name: main
+        resources:
+          limits:
+            cpu: "5"
+            memory: 32Gi
+          requests:
+            cpu: "5"
+            memory: 32Gi
+  - always_run: true
+    branches:
+    - release-1.27-lts
+    context: pull-kubernetes-unit-go-compatibility
+    decorate: true
+    labels:
+      preset-service-account: "true"
+    name: pull-kubernetes-unit-go-compatibility
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+      - command:
+        - make
+        - test
+        env:
+        - name: GO_VERSION
+          value: 1.20.2
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
+        name: ""
+        resources:
+          limits:
+            cpu: "4"
+            memory: 36Gi
+          requests:
+            cpu: "4"
+            memory: 36Gi
+        securityContext:
+          allowPrivilegeEscalation: false
+      securityContext:
+        runAsGroup: 2010
+        runAsUser: 2001
