@@ -42,6 +42,9 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
+          parameters: |
+            aks_cluster_region=westus2
+            aks_cluster_admins=${{ secrets.PROW_ADMINS }}
           failOnStdErr: false
 
       - name: Fetch config
