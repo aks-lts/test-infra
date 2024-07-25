@@ -1,15 +1,18 @@
 name: Deploy AKS LTS Prow
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      deployEnv:
+        description: 'Environment to run against'
+        type: environment
+        required: true
 permissions:
   id-token: write
   contents: read
 jobs:
   Deploy_AKS_LTS_Prow:
     runs-on: ubuntu-latest
-    environment: production
+    environment:  ${{ vars.deployEnv }}
     env:
       GITHUB_APP_ID: ${{ vars.APP_ID }}
       GITHUB_ORG: ${{ vars.ORG }}
@@ -39,9 +42,10 @@ jobs:
         id: bicep
         uses: azure/arm-deploy@v2
         with:
-          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION }}
+          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
+          parameters: aks_cluster_admins="${{ secrets.PROW_ADMINS }}"
           failOnStdErr: false
 
       - name: Fetch config
