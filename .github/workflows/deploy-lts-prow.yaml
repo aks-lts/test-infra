@@ -1,15 +1,18 @@
 name: Deploy AKS LTS Prow
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      deployEnv:
+        description: 'Environment to run against'
+        type: environment
+        required: true
 permissions:
   id-token: write
   contents: read
 jobs:
   Deploy_AKS_LTS_Prow:
     runs-on: ubuntu-latest
-    environment: production
+    environment:  ${{ inputs.deployEnv }}
     env:
       GITHUB_APP_ID: ${{ vars.APP_ID }}
       GITHUB_ORG: ${{ vars.ORG }}
@@ -26,7 +29,7 @@ jobs:
           echo "FAKE_MOUNT_SECRET=$FAKE_MOUNT_SECRET" >> "$GITHUB_ENV"
 
       - name: Check out repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Azure login
         uses: azure/login@v2
@@ -37,11 +40,12 @@ jobs:
 
       - name: Deploy Prow cluster Bicep
         id: bicep
-        uses: azure/arm-deploy@v1
+        uses: azure/arm-deploy@v2
         with:
-          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION }}
+          subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ vars.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
+          parameters: aks_cluster_admins="${{ secrets.PROW_ADMINS }}"
           failOnStdErr: false
 
       - name: Fetch config
@@ -52,10 +56,10 @@ jobs:
           echo "CLUSTER_RG=${{ steps.bicep.outputs.resourceGroupName }}" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
-        uses: azure/setup-kubectl@v3
+        uses: azure/setup-kubectl@v4
 
       - name: Set AKS cluster context
-        uses: azure/aks-set-context@v3
+        uses: azure/aks-set-context@v4
         with:
           resource-group: ${{ vars.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
