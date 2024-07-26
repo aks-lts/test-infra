@@ -41,7 +41,9 @@ jobs:
       - name: create resourceGroup
         if : ${{ inputs.deployEnv == 'PRTest' }}
         run: |
-          az group create --name ${{ secrets.AZURE_RG }} --location ${{ secrets.AZURE_LOCATION }}
+          if [ $(az group exists --name ${{ secrets.AZURE_RG }}) = false ]; then
+              az group create --name ${{ secrets.AZURE_RG }} --location ${{ secrets.AZURE_LOCATION }}
+          fi
 
 
       - name: Deploy Prow cluster Bicep
