@@ -73,6 +73,10 @@ jobs:
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
           admin: true
 
+      - name: 'install minio'
+        run: |
+          kubectl apply -k "github.com/minio/operator?ref=v5.0.15"
+
       - name: 'Apply Prow base manifests'
         run: |
           kubectl apply -f config/prow/k8s/base/ns.yaml
