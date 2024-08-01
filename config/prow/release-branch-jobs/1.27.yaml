@@ -171,3 +171,119 @@
       securityContext:
         runAsGroup: 2010
         runAsUser: 2001
+  - always_run: true
+    branches:
+    - release-1.27-lts
+    context: pull-kubernetes-e2e-kind
+    decorate: true
+    decoration_config:
+      grace_period: 15m0s
+      timeout: 1h0m0s
+    labels:
+      preset-dind-enabled: "true"
+      preset-kind-volume-mounts: "true"
+    name: pull-kubernetes-e2e-kind
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+      - command:
+        - wrapper.sh
+        - bash
+        - -c
+        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
+        env:
+        - name: FOCUS
+          value: .
+        - name: SKIP
+          value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|PodSecurityPolicy|LoadBalancer|load.balancer|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing|NFS|nfs|inline.execution.and.attach|should.be.rejected.when.no.endpoints.exist
+        - name: PARALLEL
+          value: "true"
+        image: gcr.io/k8s-staging-test-infra/krte:v20240705-131cd74733-1.27
+        name: ""
+        resources:
+          limits:
+            cpu: "7"
+            memory: 9000Mi
+          requests:
+            cpu: "7"
+            memory: 9000Mi
+        securityContext:
+          privileged: true
+  - always_run: true
+    branches:
+    - release-1.27-lts
+    context: pull-kubernetes-e2e-kind-ipv6
+    decorate: true
+    decoration_config:
+      grace_period: 15m0s
+      timeout: 1h0m0s
+    labels:
+      preset-dind-enabled: "true"
+      preset-kind-volume-mounts: "true"
+    name: pull-kubernetes-e2e-kind-ipv6
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+      - command:
+        - wrapper.sh
+        - bash
+        - -c
+        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
+        env:
+        - name: FOCUS
+          value: .
+        - name: SKIP
+          value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|\[sig-storage\]|PodSecurityPolicy|LoadBalancer|load.balancer|In-tree.Volumes.\[Driver:.nfs\]|PersistentVolumes.NFS|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing
+        - name: PARALLEL
+          value: "true"
+        - name: DOCKER_IN_DOCKER_IPV6_ENABLED
+          value: "true"
+        - name: IP_FAMILY
+          value: ipv6
+        image: gcr.io/k8s-staging-test-infra/krte:v20240705-131cd74733-1.27
+        name: ""
+        resources:
+          limits:
+            cpu: "4"
+            memory: 9Gi
+          requests:
+            cpu: "4"
+            memory: 9Gi
+        securityContext:
+          privileged: true
+  - always_run: true
+    branches:
+    - release-1.27-lts
+    context: pull-kubernetes-conformance-kind-ga-only-parallel
+    decorate: true
+    decoration_config:
+      grace_period: 15m0s
+      timeout: 1h0m0s
+    labels:
+      preset-dind-enabled: "true"
+      preset-kind-volume-mounts: "true"
+    name: pull-kubernetes-conformance-kind-ga-only-parallel
+    path_alias: k8s.io/kubernetes
+    spec:
+      containers:
+      - command:
+        - wrapper.sh
+        - bash
+        - -c
+        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
+        env:
+        - name: GA_ONLY
+          value: "true"
+        - name: PARALLEL
+          value: "true"
+        image: gcr.io/k8s-staging-test-infra/krte:v20240705-131cd74733-1.27
+        name: ""
+        resources:
+          limits:
+            cpu: "4"
+            memory: 9Gi
+          requests:
+            cpu: "4"
+            memory: 9Gi
+        securityContext:
+          privileged: true
