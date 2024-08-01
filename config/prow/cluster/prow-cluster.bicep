@@ -80,7 +80,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
     }
     storageProfile: {
       diskCSIDriver: {
-        enabled: false
+        enabled: true // ghproxy in prow need this.
       }
       snapshotController: {
         enabled: false
@@ -89,7 +89,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
         enabled: false
       }
       blobCSIDriver: {
-        enabled: true
+        enabled: true // plan to use this for minio
       }
     }
   }
