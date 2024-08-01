@@ -37,14 +37,20 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: create resourceGroup
+        run: |
+          if [ $(az group exists --name ${{ secrets.AZURE_RG }}) = false ]; then
+              az group create --name ${{ secrets.AZURE_RG }} --location ${{ secrets.AZURE_LOCATION }}
+          fi
+
       - name: Deploy Prow cluster Bicep
         id: bicep
         uses: azure/arm-deploy@v2
         with:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ vars.AZURE_RG }}
+          resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
-          parameters: aks_cluster_admins="${{ secrets.PROW_ADMINS }}"
+          parameters: aks_cluster_region=${{ secrets.AZURE_LOCATION }} aks_cluster_admins="${{ secrets.PROW_ADMINS }}"
           failOnStdErr: false
 
       - name: Fetch config
@@ -60,7 +66,7 @@ jobs:
       - name: Set AKS cluster context
         uses: azure/aks-set-context@v4
         with:
-          resource-group: ${{ vars.AZURE_RG }}
+          resource-group: ${{ secrets.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
           admin: true
 
@@ -72,7 +78,7 @@ jobs:
           envsubst < config/prow/k8s/base/prowdata.storageclass.yaml > prowdata.storageclass.yaml
           kubectl apply -f prowdata.storageclass.yaml
         env:
-          AZURE_RG: ${{ vars.AZURE_RG }}
+          AZURE_RG: ${{ secrets.AZURE_RG }}
 
       - name: 'Create GitHub Token secrets'
         run: |
@@ -84,10 +90,10 @@ jobs:
       - name: Fetch storage key
         id: fetch-storage-key
         run: |
-          AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
+          AZURE_STORAGE_ACCOUNT_PASSWORD=$(az storage account keys list -g ${{ secrets.AZURE_RG }} -n ${{ steps.bicep.outputs.storageAccountName }} | jq -r '.[0].value')
           echo "::add-mask::$AZURE_STORAGE_ACCOUNT_PASSWORD"
           echo "AZURE_STORAGE_ACCOUNT_PASSWORD=$AZURE_STORAGE_ACCOUNT_PASSWORD" >> "$GITHUB_ENV"
-          PUBLIC_IP_ADDRESS=$(az network public-ip show -g ${{ vars.AZURE_RG }} -n ${{ steps.bicep.outputs.publicIpName }} | jq -r '.ipAddress')
+          PUBLIC_IP_ADDRESS=$(az network public-ip show -g ${{ secrets.AZURE_RG }} -n ${{ steps.bicep.outputs.publicIpName }} | jq -r '.ipAddress')
           echo "::add-mask::$PUBLIC_IP_ADDRESS"
           echo "PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS" >> "$GITHUB_ENV"
 
@@ -104,9 +110,9 @@ jobs:
       - name: 'Apply Prow app manifests'
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
-          AZURE_RG: ${{ vars.AZURE_RG }}
+          AZURE_RG: ${{ secrets.AZURE_RG }}
 
       - name: 'Apply test pod manifests'
         run: for f in config/prow/k8s/test-pods/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
-          AZURE_RG: ${{ vars.AZURE_RG }}
+          AZURE_RG: ${{ secrets.AZURE_RG }}
