@@ -45,6 +45,3 @@ LTS specific configuration and tooling for testing
 Image repo: https://console.cloud.google.com/gcr/images/k8s-prow
 
 Reference the version used in upstream by looking up [gcr.io/k8s-prow/prow-controller-manager](https://github.com/search?q=repo%3Akubernetes%2Ftest-infra+gcr.io%2Fk8s-prow%2Fprow-controller-manager&type=code) or [gcr.io/k8s-prow/entrypoint](https://github.com/search?q=repo%3Akubernetes%2Ftest-infra+gcr.io%2Fk8s-prow%2Fentrypoint&type=code) verions.
-
-## KUBEKINS-E2E (KUBEKINS_E2E_TAG)
-Reference the version used in upstraem by looking up [kubekins-e2e:](https://github.com/search?q=repo%3Akubernetes%2Ftest-infra+kubekins-e2e%3A&type=code&p=2)

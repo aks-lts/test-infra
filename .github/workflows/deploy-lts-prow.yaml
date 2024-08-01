@@ -17,7 +17,6 @@ jobs:
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
       K8S_PROW_IMAGE_TAG: v20240723-dbbd2d86b
-      KUBEKINS_E2E_TAG: v20240705-131cd74733-master #might be unused
     steps:
       - name: Generate fake mount secret
         run: |
