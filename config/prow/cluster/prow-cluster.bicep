@@ -54,7 +54,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
       {
         name: 'k8stest'
         vmSize: test_vm_sku
-        osDiskType: 'Managed'
+        osDiskSizeGB: 256
+        osDiskType: 'Ephemeral'
         kubeletDiskType: 'OS'
         maxPods: 110
         type: 'VirtualMachineScaleSets'
@@ -67,7 +68,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
         osSKU: 'Ubuntu'
         availabilityZones: ['1', '2', '3']
         nodeLabels: {
-          prow: 'testpod'
+          prowtest: 'true'
         }
       }
     ]
