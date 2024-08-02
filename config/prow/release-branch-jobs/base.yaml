@@ -55,6 +55,52 @@ plank:
           initupload: gcr.io/k8s-prow/initupload:$K8S_PROW_IMAGE_TAG
           sidecar: gcr.io/k8s-prow/sidecar:$K8S_PROW_IMAGE_TAG
 
+presets:
+# docker-in-docker (with images/bootstrap) preset
+# NOTE: using this also requires using that image,
+# ensuring you run your test under either the ENTRYPOINT or:
+# /usr/local/bin/runner.sh my-test-command --foo --bar
+# AND setting the following on your PodSpec:
+# securityContext:
+#   privileged: true
+- labels:
+    preset-dind-enabled: "true"
+  env:
+  - name: DOCKER_IN_DOCKER_ENABLED
+    value: "true"
+  volumes:
+  # kubekins-e2e legacy path
+  - name: docker-graph
+    emptyDir: {}
+  # krte (normal) path
+  - name: docker-root
+    emptyDir: {}
+  # we need to modprobe ipv6 iptables
+  # TODO: move this out of being done in the jobs
+  - name: modules
+    hostPath:
+      path: /lib/modules
+      type: Directory
+  volumeMounts:
+  - name: docker-graph
+    mountPath: /docker-graph
+  - name: docker-root
+    mountPath: /var/lib/docker
+  - mountPath: /lib/modules
+    name: modules
+    readOnly: true
+# volume mounts for kind
+- labels:
+    preset-kind-volume-mounts: "true"
+  volumeMounts:
+    - mountPath: /sys/fs/cgroup
+      name: cgroup
+  volumes:
+    - name: cgroup
+      hostPath:
+        path: /sys/fs/cgroup
+        type: Directory
+
 tide:
   queries:
     - labels:
