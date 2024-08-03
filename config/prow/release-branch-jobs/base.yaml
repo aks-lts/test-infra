@@ -100,10 +100,6 @@ presets:
       hostPath:
         path: /sys/fs/cgroup
         type: Directory
-- labels:
-    preset-test-nodepool: "true"
-  node_selector:
-    prowtest: true
 
 
 tide:
