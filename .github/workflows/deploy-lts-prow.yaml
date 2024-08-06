@@ -65,6 +65,8 @@ jobs:
 
       - name: Set up kubelogin for non-interactive login
         uses: azure/use-kubelogin@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set AKS cluster context
         uses: azure/aks-set-context@v4
