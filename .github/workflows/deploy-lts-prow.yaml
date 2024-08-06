@@ -50,7 +50,7 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
-          parameters: aks_cluster_region=${{ secrets.AZURE_LOCATION }} aks_cluster_admins="${{ secrets.PROW_ADMINS }}"
+          parameters: aks_cluster_region=${{ secrets.AZURE_LOCATION }} aks_cluster_admin_groups="${{ secrets.PROW_ADMIN_GROUPS }}" aks_cluster_admin_users="${{ secrets.PROW_ADMIN_USERS }}"
           failOnStdErr: false
 
       - name: Fetch config
@@ -63,12 +63,18 @@ jobs:
       - name: Install Kubectl
         uses: azure/setup-kubectl@v4
 
+      - name: Set up kubelogin for non-interactive login
+        uses: azure/use-kubelogin@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set AKS cluster context
         uses: azure/aks-set-context@v4
         with:
           resource-group: ${{ secrets.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
-          admin: true
+          admin: 'false'
+          use-kubelogin: 'true'
 
       - name: 'Apply Prow base manifests'
         run: |
