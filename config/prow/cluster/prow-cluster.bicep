@@ -3,7 +3,7 @@ param aks_cluster_prefix string = 'aks-lts-prow'
 param aks_cluster_admins array = []
 param system_vm_sku string = 'Standard_DS3_v2'
 param prow_vm_sku string = 'Standard_DS3_v2'
-param test_vm_sku string = 'Standard_D16s_v5'
+param test_vm_sku string = 'Standard_D32d_v4'
 param storage_account_prefix string = 'prow'
 
 resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
@@ -54,7 +54,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
       {
         name: 'k8stest'
         vmSize: test_vm_sku
-        osDiskType: 'Managed'
+        osDiskSizeGB: 256
+        osDiskType: 'Ephemeral'
         kubeletDiskType: 'OS'
         maxPods: 110
         type: 'VirtualMachineScaleSets'
@@ -66,6 +67,9 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
         osType: 'Linux'
         osSKU: 'Ubuntu'
         availabilityZones: ['1', '2', '3']
+        nodeLabels: {
+          prowtest: 'true'
+        }
       }
     ]
     enableRBAC: true
