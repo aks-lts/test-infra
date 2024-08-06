@@ -68,7 +68,6 @@ jobs:
         with:
           resource-group: ${{ secrets.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
-          admin: true
 
       - name: 'Apply Prow base manifests'
         run: |
