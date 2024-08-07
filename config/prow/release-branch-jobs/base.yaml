@@ -100,7 +100,13 @@ presets:
       hostPath:
         path: /sys/fs/cgroup
         type: Directory
-
+- labels:
+    preset-maxprocs: "true"
+  env:
+  - name: GOMAXPROCS
+    valueFrom:
+      resourceFieldRef:
+        resource: limits.cpu
 
 tide:
   queries:
