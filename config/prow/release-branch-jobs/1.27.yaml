@@ -317,6 +317,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-service-account: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-verify
     path_alias: k8s.io/kubernetes
     spec:
