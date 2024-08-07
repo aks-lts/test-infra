@@ -1,12 +1,13 @@
 param aks_cluster_region string = 'westus3'
 param aks_cluster_prefix string = 'aks-lts-prow'
-param aks_cluster_admins array = []
+param aks_cluster_admin_groups array = []
+param aks_cluster_admin_users array = []
 param system_vm_sku string = 'Standard_DS3_v2'
 param prow_vm_sku string = 'Standard_DS3_v2'
 param test_vm_sku string = 'Standard_D32d_v4'
 param storage_account_prefix string = 'prow'
 
-resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
+resource aks 'Microsoft.ContainerService/managedClusters@2024-06-01' = {
   name: '${aks_cluster_prefix}-${uniqueString(resourceGroup().id, aks_cluster_region)}'
   location: aks_cluster_region
   sku: {
@@ -80,7 +81,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-03-01' = {
     aadProfile: {
       managed: true
       enableAzureRBAC: false
-      adminGroupObjectIDs: aks_cluster_admins
+      adminGroupObjectIDs: aks_cluster_admin_groups
+      adminUsers: aks_cluster_admin_users
     }
     storageProfile: {
       diskCSIDriver: {
