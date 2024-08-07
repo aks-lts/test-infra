@@ -1,11 +1,12 @@
   # 1.27-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
-  - always_run: true
+  - always_run: true # pull-kubernetes-dependencies
     branches:
       - release-1.27-lts
     context: pull-kubernetes-dependencies
     decorate: true
     labels:
       preset-dind-enabled: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-dependencies
     path_alias: k8s.io/kubernetes
     spec:
@@ -31,13 +32,14 @@
               memory: 4Gi
           securityContext:
             privileged: true
-  - always_run: true
+  - always_run: true # pull-kubernetes-integration
     branches:
       - release-1.27-lts
     context: pull-kubernetes-integration
     decorate: true
     labels:
       preset-dind-enabled: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-integration
     path_alias: k8s.io/kubernetes
     spec:
@@ -59,7 +61,7 @@
               memory: 4Gi
           securityContext:
             privileged: true
-  - always_run: true
+  - always_run: true # pull-kubernetes-integration-go-compatibility
     annotations:
       description: run with GO_VERSION set to the original go version used for this branch
     branches:
@@ -68,6 +70,7 @@
     decorate: true
     labels:
       preset-dind-enabled: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-integration-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -92,11 +95,13 @@
               memory: 4Gi
           securityContext:
             privileged: true
-  - always_run: true
+  - always_run: true # pull-kubernetes-unit
     branches:
       - release-1.27-lts
     context: pull-kubernetes-unit
     decorate: true
+    labels:
+      preset-maxprocs: "true"
     name: pull-kubernetes-unit
     path_alias: k8s.io/kubernetes
     spec:
@@ -117,11 +122,13 @@
               memory: 4Gi
       securityContext:
         runAsUser: 2000
-  - always_run: true
+  - always_run: true # pull-kubernetes-typecheck
     branches:
     - release-1.27-lts
     context: pull-kubernetes-typecheck
     decorate: true
+    labels:
+      preset-maxprocs: "true"
     name: pull-kubernetes-typecheck
     path_alias: k8s.io/kubernetes
     spec:
@@ -144,11 +151,13 @@
           requests:
             cpu: "5"
             memory: 32Gi
-  - always_run: true
+  - always_run: true # pull-kubernetes-unit-go-compatibility
     branches:
     - release-1.27-lts
     context: pull-kubernetes-unit-go-compatibility
     decorate: true
+    labels:
+      preset-maxprocs: "true"
     name: pull-kubernetes-unit-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -175,7 +184,7 @@
       securityContext:
         runAsGroup: 2010
         runAsUser: 2001
-  - always_run: true
+  - always_run: true # pull-kubernetes-e2e-kind
     branches:
     - release-1.27-lts
     context: pull-kubernetes-e2e-kind
@@ -186,6 +195,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-kind-volume-mounts: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-e2e-kind
     path_alias: k8s.io/kubernetes
     spec:
@@ -215,7 +225,7 @@
             memory: 9000Mi
         securityContext:
           privileged: true
-  - always_run: true
+  - always_run: true # pull-kubernetes-e2e-kind-ipv6
     branches:
     - release-1.27-lts
     context: pull-kubernetes-e2e-kind-ipv6
@@ -226,6 +236,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-kind-volume-mounts: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-e2e-kind-ipv6
     path_alias: k8s.io/kubernetes
     spec:
@@ -259,7 +270,7 @@
             memory: 9Gi
         securityContext:
           privileged: true
-  - always_run: true
+  - always_run: true # pull-kubernetes-conformance-kind-ga-only-parallel
     branches:
     - release-1.27-lts
     context: pull-kubernetes-conformance-kind-ga-only-parallel
@@ -270,6 +281,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-kind-volume-mounts: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-conformance-kind-ga-only-parallel
     path_alias: k8s.io/kubernetes
     spec:
@@ -305,6 +317,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-service-account: "true"
+      preset-maxprocs: "true"
     name: pull-kubernetes-verify
     path_alias: k8s.io/kubernetes
     spec:
