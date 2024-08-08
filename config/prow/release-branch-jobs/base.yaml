@@ -101,7 +101,7 @@ presets:
         path: /sys/fs/cgroup
         type: Directory
 - labels:
-    preset-maxprocs: "true"
+    preset-gomaxprocs: "true"
   env:
   - name: GOMAXPROCS
     valueFrom:
@@ -127,11 +127,21 @@ periodics:
 - interval: 24h
   agent: kubernetes
   name: echo-test
+  decorate: true
+  labels:
+    preset-gomaxprocs: "true"
   namespace: test-pods
   spec:
     containers:
       - image: alpine
         command: ["/bin/date"]
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
 postsubmits: {}
 presubmits:
   $GITHUB_ORG/$GITHUB_REPO:
