@@ -100,8 +100,9 @@ presets:
       hostPath:
         path: /sys/fs/cgroup
         type: Directory
+# gomaxprocs preset
 - labels:
-    preset-maxprocs: "true"
+    preset-gomaxprocs: "true"
   env:
   - name: GOMAXPROCS
     valueFrom:
@@ -127,6 +128,7 @@ periodics:
 - interval: 24h
   agent: kubernetes
   name: echo-test
+  decorate: true
   namespace: test-pods
   spec:
     containers:
