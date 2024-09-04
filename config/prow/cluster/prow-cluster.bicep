@@ -98,6 +98,14 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-06-01' = {
         enabled: true // plan to use this for minio
       }
     }
+    oidcIssuerProfile: {
+      enabled: true
+    }
+    securityProfile: {
+      workloadIdentity: {
+        enabled: true
+      }
+    }
   }
 }
 
