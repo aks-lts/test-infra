@@ -72,7 +72,7 @@ jobs:
           echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
           echo "PUBLIC_IP_NAME=${{ steps.bicep.outputs.publicIpName }}" >> "$GITHUB_ENV"
           echo "CLUSTER_RG=${{ steps.bicep.outputs.resourceGroupName }}" >> "$GITHUB_ENV"
-          echo "CAPZ_SA"=${{ steps.capzbicep.outputs.capzsastorage_name }}" >> "$GITHUB_ENV"
+          echo "CAPZ_SA=${{ steps.capzbicep.outputs.capzsastorage_name }}" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v4
