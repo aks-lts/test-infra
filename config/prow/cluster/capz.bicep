@@ -2,6 +2,10 @@ param resource_prefix string = 'capz'
 @secure()
 param location string = resourceGroup().location
 
+// https://github.com/kubernetes/k8s.io/tree/main/infra/azure/terraform/capz 
+// https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml
+// https://github.com/kubernetes-sigs/windows-testing/tree/master/capz
+
 resource cloudproviderId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: '${resource_prefix}-cloud-provider-id-${uniqueString(resourceGroup().id, location)}'
   location: location
