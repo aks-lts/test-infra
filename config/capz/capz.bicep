@@ -125,7 +125,7 @@ resource e2eprivatecommunity 'Microsoft.ContainerRegistry/registries@2023-01-01-
   }
 }
 
-resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
+resource capzsa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   name: '${resource_prefix}sa${random_suffix}'
   location: location
   sku: {
@@ -138,3 +138,6 @@ resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
     supportsHttpsTrafficOnly: true
   } 
 }
+
+output capzci_registry_name string = capzci_registry.name
+output capzsastorage_name string = capzsa.name

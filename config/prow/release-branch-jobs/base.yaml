@@ -137,17 +137,17 @@ presets:
     preset-azure-community: "true"
   env: # below env values are not secrets
   - name: AZURE_CLIENT_ID
-    value: "34d8e06d-d198-477e-b166-6936e58d90ae"
+    value: "07a59928-edb3-4a5c-a09b-56473261713c"
   - name: AZURE_SUBSCRIPTION_ID
-    value: "46678f10-4bbb-447e-98e8-d2829589f2d8"
+    value: "$AZURE_SUBSCRIPTION_ID"
   - name: AZURE_TENANT_ID
-    value: "d1aa7522-0959-442e-80ee-8c4f7fb4c184"
+    value: "72f988bf-86f1-41af-91ab-2d7cd011db47"
   - name: AZURE_FEDERATED_TOKEN_FILE
     value: "/var/run/secrets/azure-token/serviceaccount/token"
   - name: AZURE_STORAGE_ACCOUNT
-    value: "k8sprowstoragecomm"
+    value: "$CAPZ_SA"
   - name: REGISTRY
-    value: "capzcicommunity.azurecr.io"
+    value: "$CAPZ_CI_REGISTRY"
   - name: USE_LOCAL_KIND_REGISTRY
     value: "false"
   volumes:
