@@ -99,11 +99,11 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-06-01' = {
       }
     }
     oidcIssuerProfile: {
-      enabled: true
+      enabled: true // windows capz prowjob need this
     }
     securityProfile: {
       workloadIdentity: {
-        enabled: true
+        enabled: true // windows capz prowjob need this
       }
     }
   }

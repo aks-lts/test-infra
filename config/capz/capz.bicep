@@ -2,27 +2,29 @@ param resource_prefix string = 'capz'
 @secure()
 param location string = resourceGroup().location
 
+param random_suffix string = substring(uniqueString(resourceGroup().id, location), 0, 8)
+
 // https://github.com/kubernetes/k8s.io/tree/main/infra/azure/terraform/capz 
 // https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml
 // https://github.com/kubernetes-sigs/windows-testing/tree/master/capz
 
 resource cloudproviderId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${resource_prefix}-cloud-provider-id-${uniqueString(resourceGroup().id, location)}'
+  name: '${resource_prefix}-cloud-provider-id-${random_suffix}'
   location: location
 }
 
 resource domainVMId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${resource_prefix}-domain-vm-id-${uniqueString(resourceGroup().id, location)}'
+  name: '${resource_prefix}-domain-vm-id-${random_suffix}'
   location: location
 }
 
 resource gmsaId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${resource_prefix}-gmsa-id-${uniqueString(resourceGroup().id, location)}'
+  name: '${resource_prefix}-gmsa-id-${random_suffix}'
   location: location
 }
 
 resource gmsa_kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: '${resource_prefix}-gmsa-${uniqueString(resourceGroup().id, location)}'
+  name: '${resource_prefix}gmsakv${random_suffix}'
   location: location
   properties: {
     sku: {
@@ -50,7 +52,7 @@ resource gmsa_kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
 }
 
 resource capzci_registry 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
-  name: '${resource_prefix}-capzcicommunity-${uniqueString(resourceGroup().id, location)}'
+  name: '${resource_prefix}ci${random_suffix}'
   location: location
   sku: {
     name: 'Premium'
@@ -107,7 +109,7 @@ steps:
 }
 
 resource e2eprivatecommunity 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
-  name: '${resource_prefix}-e2eprivatecommunity-${uniqueString(resourceGroup().id, location)}'
+  name: '${resource_prefix}e2e${random_suffix}'
   location: location
   sku: {
     name: 'Premium'
@@ -124,7 +126,7 @@ resource e2eprivatecommunity 'Microsoft.ContainerRegistry/registries@2023-01-01-
 }
 
 resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
-  name: '${resource_prefix}-sa-${uniqueString(resourceGroup().id, location)}'
+  name: '${resource_prefix}sa${random_suffix}'
   location: location
   sku: {
     name: 'Standard_ZRS'
