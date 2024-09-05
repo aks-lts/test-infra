@@ -119,6 +119,7 @@ jobs:
           CAPZ_CI_REGISTRY=$(az acr show -g ${{ secrets.CAPZ_RG }} -n ${{ steps.capzbicep.outputs.capzci_registry_name }}  | jq .loginServer)
           echo "::add-mask::$CAPZ_CI_REGISTRY"
           echo "CAPZ_CI_REGISTRY=$CAPZ_CI_REGISTRY" >> "$GITHUB_ENV"
+          echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
 
       - name: 'Create job configs'
         run: |
