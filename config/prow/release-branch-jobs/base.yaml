@@ -108,16 +108,14 @@ presets:
     valueFrom:
       resourceFieldRef:
         resource: limits.cpu
-# capz-windows-common
+# capz-windows-common-pull
 - labels:
-    preset-capz-windows-common: "true"
+    preset-capz-windows-common-pull: "true"
   env:
-  - name: E2E_ARGS
-    value: "-kubetest.use-ci-artifacts"
   - name: WINDOWS
     value: "true"
-  - name: TEST_WINDOWS #temp to unblock failing jobs on windows while we fix this in capz (https://github.com/kubernetes/kubernetes/issues/116474)
-    value: "true"
+  - name: CONFORMANCE_NODES
+    value: "4"
   - name: AZURE_NODE_MACHINE_TYPE
     value: "Standard_D4s_v3"
 # capz-windows-2019
@@ -147,7 +145,7 @@ presets:
   - name: AZURE_STORAGE_ACCOUNT
     value: "$CAPZ_SA"
   - name: REGISTRY
-    value: "$CAPZ_CI_REGISTRY"
+    value: $CAPZ_CI_REGISTRY
   - name: USE_LOCAL_KIND_REGISTRY
     value: "false"
   volumes:
