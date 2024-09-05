@@ -50,10 +50,10 @@ plank:
           key: cert
         s3_credentials_secret: s3-credentials
         utility_images:
-          clonerefs: gcr.io/k8s-prow/clonerefs:$K8S_PROW_IMAGE_TAG
-          entrypoint: gcr.io/k8s-prow/entrypoint:$K8S_PROW_IMAGE_TAG
-          initupload: gcr.io/k8s-prow/initupload:$K8S_PROW_IMAGE_TAG
-          sidecar: gcr.io/k8s-prow/sidecar:$K8S_PROW_IMAGE_TAG
+          clonerefs: us-docker.pkg.dev/k8s-infra-prow/images/clonerefs:$K8S_PROW_IMAGE_TAG
+          entrypoint: us-docker.pkg.dev/k8s-infra-prow/images/entrypoint:$K8S_PROW_IMAGE_TAG
+          initupload: us-docker.pkg.dev/k8s-infra-prow/images/initupload:$K8S_PROW_IMAGE_TAG
+          sidecar: us-docker.pkg.dev/k8s-infra-prow/images/sidecar:$K8S_PROW_IMAGE_TAG
 
 presets:
 # docker-in-docker (with images/bootstrap) preset

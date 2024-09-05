@@ -19,7 +19,7 @@ jobs:
       GITHUB_REPO: ${{ vars.REPO }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
-      K8S_PROW_IMAGE_TAG: v20240723-dbbd2d86b
+      K8S_PROW_IMAGE_TAG: v20240802-66b115076
     steps:
       - name: Generate fake mount secret
         run: |
