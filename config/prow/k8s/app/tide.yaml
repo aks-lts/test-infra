@@ -28,7 +28,7 @@ spec:
       serviceAccountName: "tide"
       containers:
       - name: tide
-        image: gcr.io/k8s-prow/tide:$K8S_PROW_IMAGE_TAG
+        image: us-docker.pkg.dev/k8s-infra-prow/images/tide:$K8S_PROW_IMAGE_TAG
         args:
         - --dry-run=false
         - --config-path=/etc/config/config.yaml
