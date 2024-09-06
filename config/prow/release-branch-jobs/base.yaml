@@ -44,16 +44,18 @@ plank:
         github_api_endpoints:
           - http://ghproxy
           - https://api.github.com
-        github_app_id: "$GITHUB_APP_ID"
-        github_app_private_key_secret:
-          name: github-token
-          key: cert
+        # disable for now
+        # github_app_id: "$GITHUB_APP_ID"
+        # github_app_private_key_secret:
+        #  name: github-token
+        #  key: cert
         s3_credentials_secret: s3-credentials
         utility_images:
           clonerefs: us-docker.pkg.dev/k8s-infra-prow/images/clonerefs:$K8S_PROW_IMAGE_TAG
           entrypoint: us-docker.pkg.dev/k8s-infra-prow/images/entrypoint:$K8S_PROW_IMAGE_TAG
           initupload: us-docker.pkg.dev/k8s-infra-prow/images/initupload:$K8S_PROW_IMAGE_TAG
           sidecar: us-docker.pkg.dev/k8s-infra-prow/images/sidecar:$K8S_PROW_IMAGE_TAG
+        blobless_fetch: true
 
 presets:
 # docker-in-docker (with images/bootstrap) preset
@@ -146,8 +148,12 @@ presets:
     value: "$CAPZ_SA"
   - name: REGISTRY
     value: $CAPZ_CI_REGISTRY
+  - name: GMSA_KEYVAULT
+    value: $CAPZ_GMSA_KV
   - name: USE_LOCAL_KIND_REGISTRY
     value: "false"
+  - name: CI_RG
+    value: $CAPZ_RG
   volumes:
   - name: azure-token
     projected:

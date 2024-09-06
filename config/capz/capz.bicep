@@ -140,4 +140,5 @@ resource capzsa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
 }
 
 output capzci_registry_name string = capzci_registry.name
+output capz_gmsa_kv_name string = gmsa_kv.name
 output capzsastorage_name string = capzsa.name

@@ -120,6 +120,8 @@ jobs:
           echo "::add-mask::$CAPZ_CI_REGISTRY"
           echo "CAPZ_CI_REGISTRY=$CAPZ_CI_REGISTRY" >> "$GITHUB_ENV"
           echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+          ehco "::add-mask::${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}"
+          echo "CAPZ_GMSA_KV=${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}" >> "$GITHUB_ENV"
 
       - name: 'Create job configs'
         run: |
@@ -127,6 +129,10 @@ jobs:
           envsubst < config/prow/release-branch-jobs/1.27.yaml >> cm.yaml
           kubectl create configmap config -n prow --from-file=config.yaml=cm.yaml -o yaml --dry-run=client | kubectl apply -f -
           rm cm.yaml
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          CAPZ_RG: ${{ secrets.CAPZ_RG }}
+          CAPZ_GMSA_KV: ${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}
 
       - name: 'Apply Prowjob CRD'
         run: for f in config/prow/k8s/prowjob/*.yaml; do kubectl apply --server-side=true -f $f; done
