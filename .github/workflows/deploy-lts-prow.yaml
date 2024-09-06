@@ -120,7 +120,7 @@ jobs:
           echo "::add-mask::$CAPZ_CI_REGISTRY"
           echo "CAPZ_CI_REGISTRY=$CAPZ_CI_REGISTRY" >> "$GITHUB_ENV"
           echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
-          ehco "::add-mask::${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}"
+          echo "::add-mask::${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}"
           echo "CAPZ_GMSA_KV=${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}" >> "$GITHUB_ENV"
 
       - name: 'Create job configs'
