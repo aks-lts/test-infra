@@ -9,17 +9,17 @@ param random_suffix string = substring(uniqueString(resourceGroup().id, location
 // https://github.com/kubernetes-sigs/windows-testing/tree/master/capz
 
 resource cloudproviderId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${resource_prefix}-cloud-provider-id-${random_suffix}'
+  name: 'cloud-provider-user-identity'
   location: location
 }
 
 resource domainVMId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${resource_prefix}-domain-vm-id-${random_suffix}'
+  name: 'domain-vm-identity'
   location: location
 }
 
 resource gmsaId 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${resource_prefix}-gmsa-id-${random_suffix}'
+  name: 'gmsa-user-identity'
   location: location
 }
 

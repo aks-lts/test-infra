@@ -154,6 +154,8 @@ presets:
     value: "false"
   - name: CI_RG
     value: $CAPZ_RG
+  - name: TEST_K8S
+    value: "true"
   volumes:
   - name: azure-token
     projected:
