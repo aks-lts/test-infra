@@ -139,6 +139,17 @@ resource capzsa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
   } 
 }
 
+resource cloudproviderblobcontributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('storage-rbac', cloudproviderId.id, capzsa.id, 'Storage Blob Data Contributor')
+  scope: capzsa
+  properties: {
+    principalId: cloudproviderId.properties.principalId
+    roleDefinitionId: tenantResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
+    principalType: 'ServicePrincipal'
+    description: 'Allow kubeadm script to download private build from storage account'
+  }
+}
+
 output capzci_registry_name string = capzci_registry.name
 output capz_gmsa_kv_name string = gmsa_kv.name
 output capzsastorage_name string = capzsa.name
