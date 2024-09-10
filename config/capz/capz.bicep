@@ -146,7 +146,18 @@ resource cloudproviderblobcontributor 'Microsoft.Authorization/roleAssignments@2
     principalId: cloudproviderId.properties.principalId
     roleDefinitionId: tenantResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
     principalType: 'ServicePrincipal'
-    description: 'Allow kubeadm script to download private build from storage account'
+    description: 'Allow controlPlane VM to download private build from storage account'
+  }
+}
+
+resource domainvmblobcontributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('storage-rbac', domainVMId.id, capzsa.id, 'Storage Blob Data Contributor')
+  scope: capzsa
+  properties: {
+    principalId: cloudproviderId.properties.principalId
+    roleDefinitionId: tenantResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
+    principalType: 'ServicePrincipal'
+    description: 'Allow windows node VM to download private build from storage account'
   }
 }
 
