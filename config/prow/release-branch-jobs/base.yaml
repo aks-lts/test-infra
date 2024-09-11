@@ -156,8 +156,8 @@ presets:
     value: $CAPZ_RG
   - name: TEST_K8S
     value: "true"
-  - name: AZURE_LOCATION
-    value: "australiaeast"
+  - name: SKIP_CLEANUP
+    value: "true"
   volumes:
   - name: azure-token
     projected:

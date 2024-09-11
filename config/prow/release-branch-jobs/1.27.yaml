@@ -371,7 +371,7 @@
       org: kubernetes-sigs
       path_alias: sigs.k8s.io/cloud-provider-azure
       repo: cloud-provider-azure
-    - org: kubernetes-sigs
+    - org: haitch
       repo: windows-testing
       base_ref: master
       path_alias: k8s.io/windows-testing
