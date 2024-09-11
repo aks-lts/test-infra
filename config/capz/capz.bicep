@@ -154,10 +154,21 @@ resource domainvmblobcontributor 'Microsoft.Authorization/roleAssignments@2022-0
   name: guid('storage-rbac', domainVMId.id, capzsa.id, 'Storage Blob Data Contributor')
   scope: capzsa
   properties: {
-    principalId: cloudproviderId.properties.principalId
+    principalId: domainVMId.properties.principalId
     roleDefinitionId: tenantResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
     principalType: 'ServicePrincipal'
     description: 'Allow windows node VM to download private build from storage account'
+  }
+}
+
+resource cloudprovideridentityoperator 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('domainvmid-operator', cloudproviderId.id, domainVMId.id, 'Storage Blob Data Contributor')
+  scope: domainVMId
+  properties: {
+    principalId: cloudproviderId.properties.principalId
+    roleDefinitionId: tenantResourceId('Microsoft.Authorization/roleDefinitions', 'f1a07417-d97a-45cb-824c-7a7467783830') // Managed Identity Operator
+    principalType: 'ServicePrincipal'
+    description: 'Allow cloudprovider VM to attach domain VM identity to windows VM'
   }
 }
 
