@@ -1,7 +1,7 @@
   # 1.28-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-node-e2e-containerd
     decorate: true
     decoration_config:
@@ -42,7 +42,7 @@
               memory: 6Gi
   - always_run: false
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-node-e2e-containerd-kubetest2
     decorate: true
     decoration_config:
@@ -85,7 +85,7 @@
               memory: 6Gi
   - always_run: false
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-conformance-kind-ipv6-parallel
     decorate: true
     labels:
@@ -124,7 +124,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-dependencies
     decorate: true
     labels:
@@ -155,7 +155,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-integration
     decorate: true
     labels:
@@ -182,7 +182,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-integration-go-compatibility
     decorate: true
     labels:
@@ -212,7 +212,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-e2e-kind
     decorate: true
     decoration_config:
@@ -250,7 +250,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-e2e-kind-ipv6
     decorate: true
     decoration_config:
@@ -292,7 +292,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-conformance-kind-ga-only-parallel
     decorate: true
     decoration_config:
@@ -328,7 +328,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-unit
     decorate: true
     labels:
@@ -356,7 +356,7 @@
         runAsUser: 2001
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-unit-go-compatibility
     decorate: true
     labels:
@@ -387,7 +387,7 @@
         runAsUser: 2001
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-typecheck
     decorate: true
     name: pull-kubernetes-typecheck
@@ -412,7 +412,7 @@
               memory: 32Gi
   - always_run: false
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-update
     decorate: true
     labels:
@@ -432,7 +432,7 @@
             - name: EXCLUDE_GODEP
               value: "y"
             - name: KUBE_VERIFY_GIT_BRANCH
-              value: release-1.28
+              value: release-1.28-lts
             - name: REPO_DIR
               value: /workspace/k8s.io/kubernetes
           image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20241125-b4ea3e27a6-1.28
@@ -449,7 +449,7 @@
             privileged: true
   - always_run: true
     branches:
-      - release-1.28
+      - release-1.28-lts
     context: pull-kubernetes-verify
     decorate: true
     labels:
@@ -469,7 +469,7 @@
             - name: EXCLUDE_GODEP
               value: "y"
             - name: KUBE_VERIFY_GIT_BRANCH
-              value: release-1.28
+              value: release-1.28-lts
             - name: REPO_DIR
               value: /workspace/k8s.io/kubernetes
           image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20241125-b4ea3e27a6-1.28
