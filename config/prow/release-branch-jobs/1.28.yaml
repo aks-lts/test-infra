@@ -8,6 +8,7 @@
       preset-dind-enabled: "true"
       preset-kind-volume-mounts: "true"
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     max_concurrency: 8
     name: pull-kubernetes-conformance-kind-ipv6-parallel
     optional: true
@@ -46,6 +47,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-dependencies
     path_alias: k8s.io/kubernetes
     spec:
@@ -77,6 +79,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-integration
     path_alias: k8s.io/kubernetes
     spec:
@@ -104,6 +107,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-integration-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -137,6 +141,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-kind-volume-mounts: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-e2e-kind
     path_alias: k8s.io/kubernetes
     spec:
@@ -175,6 +180,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-kind-volume-mounts: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-e2e-kind-ipv6
     path_alias: k8s.io/kubernetes
     spec:
@@ -217,6 +223,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-kind-volume-mounts: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-conformance-kind-ga-only-parallel
     path_alias: k8s.io/kubernetes
     spec:
@@ -249,6 +256,7 @@
     decorate: true
     labels:
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-unit
     path_alias: k8s.io/kubernetes
     spec:
@@ -277,6 +285,7 @@
     decorate: true
     labels:
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-unit-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -308,6 +317,8 @@
     decorate: true
     name: pull-kubernetes-typecheck
     path_alias: k8s.io/kubernetes
+    labels:
+      preset-gomaxprocs: "true"
     spec:
       containers:
         - args:
@@ -334,6 +345,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-update
     path_alias: k8s.io/kubernetes
     spec:
@@ -371,6 +383,7 @@
     labels:
       preset-dind-enabled: "true"
       preset-service-account: "true"
+      preset-gomaxprocs: "true"
     name: pull-kubernetes-verify
     path_alias: k8s.io/kubernetes
     spec:
