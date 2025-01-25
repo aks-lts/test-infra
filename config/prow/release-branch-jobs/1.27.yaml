@@ -367,7 +367,7 @@
       path_alias: sigs.k8s.io/cluster-api-provider-azure
       repo: cluster-api-provider-azure
       workdir: false
-    - base_ref: master
+    - base_ref: release-1.27
       org: kubernetes-sigs
       path_alias: sigs.k8s.io/cloud-provider-azure
       repo: cloud-provider-azure
@@ -388,6 +388,13 @@
         - "./capz/run-capz-e2e.sh"
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20240705-131cd74733-1.27
         name: ""
+        env:
+        - name: CAPI_VERSION
+          value: "v1.7.3" # newer version (v1.7.4 and beyond) use kubeadm.k8s.io/v1beta4, which is not support by 1.27 kubeadm.
+        - name: AZURE_LOCATION
+          value: "australiaeast"
+        - name: "KUBERNETES_VERSION"
+          value: "1.27"
         resources:
           requests:
             cpu: "2"
