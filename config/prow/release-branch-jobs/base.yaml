@@ -44,16 +44,18 @@ plank:
         github_api_endpoints:
           - http://ghproxy
           - https://api.github.com
-        github_app_id: "$GITHUB_APP_ID"
-        github_app_private_key_secret:
-          name: github-token
-          key: cert
+        # disable for now
+        # github_app_id: "$GITHUB_APP_ID"
+        # github_app_private_key_secret:
+        #  name: github-token
+        #  key: cert
         s3_credentials_secret: s3-credentials
         utility_images:
           clonerefs: us-docker.pkg.dev/k8s-infra-prow/images/clonerefs:$K8S_PROW_IMAGE_TAG
           entrypoint: us-docker.pkg.dev/k8s-infra-prow/images/entrypoint:$K8S_PROW_IMAGE_TAG
           initupload: us-docker.pkg.dev/k8s-infra-prow/images/initupload:$K8S_PROW_IMAGE_TAG
           sidecar: us-docker.pkg.dev/k8s-infra-prow/images/sidecar:$K8S_PROW_IMAGE_TAG
+        blobless_fetch: true
 
 presets:
 # docker-in-docker (with images/bootstrap) preset
@@ -108,6 +110,67 @@ presets:
     valueFrom:
       resourceFieldRef:
         resource: limits.cpu
+# capz-windows-common-pull
+- labels:
+    preset-capz-windows-common-pull: "true"
+  env:
+  - name: WINDOWS
+    value: "true"
+  - name: CONFORMANCE_NODES
+    value: "4"
+  - name: AZURE_NODE_MACHINE_TYPE
+    value: "Standard_D4s_v3"
+# capz-windows-2019
+- labels:
+    preset-capz-windows-2019: "true"
+  env:
+  - name: WINDOWS_FLAVOR
+    value: "containerd"
+# capz-windows-2019-latest
+- labels:
+    preset-capz-containerd-1-7-latest: "true"
+  env:
+  - name: WINDOWS_CONTAINERD_URL
+    value: "https://github.com/containerd/containerd/releases/download/v1.7.18/containerd-1.7.18-windows-amd64.tar.gz"
+# preset-azure-community
+- labels:
+    preset-azure-community: "true"
+  env: # below env values are not secrets
+  - name: AZURE_CLIENT_ID
+    value: "07a59928-edb3-4a5c-a09b-56473261713c"
+  - name: AZURE_SUBSCRIPTION_ID
+    value: "$AZURE_SUBSCRIPTION_ID"
+  - name: AZURE_TENANT_ID
+    value: "72f988bf-86f1-41af-91ab-2d7cd011db47"
+  - name: AZURE_FEDERATED_TOKEN_FILE
+    value: "/var/run/secrets/azure-token/serviceaccount/token"
+  - name: AZURE_STORAGE_ACCOUNT
+    value: "$CAPZ_SA"
+  - name: REGISTRY
+    value: $CAPZ_CI_REGISTRY
+  - name: GMSA_KEYVAULT
+    value: $CAPZ_GMSA_KV
+  - name: USE_LOCAL_KIND_REGISTRY
+    value: "false"
+  - name: CI_RG
+    value: $CAPZ_RG
+  - name: TEST_K8S
+    value: "true"
+  - name: SKIP_CLEANUP
+    value: "true"
+  volumes:
+  - name: azure-token
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 86400
+          path: token
+          audience: api://AzureADTokenExchange
+  volumeMounts:
+  - mountPath: /var/run/secrets/azure-token/serviceaccount
+    name: azure-token
+    readOnly: true
 
 tide:
   queries:
