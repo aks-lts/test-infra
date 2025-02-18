@@ -373,7 +373,7 @@
       repo: cloud-provider-azure
     - org: haitch
       repo: windows-testing
-      base_ref: master
+      base_ref: haitao/storage_fix # have quite few windows-testing hacks to make things work, will proposal a PR to upstream later.
       path_alias: k8s.io/windows-testing
       workdir: true
     optional: true
