@@ -362,7 +362,7 @@
       preset-capz-containerd-1-7-latest: "true"
       preset-azure-community: "true"
     extra_refs:
-    - base_ref: release-1.16
+    - base_ref: release-1.18
       org: kubernetes-sigs
       path_alias: sigs.k8s.io/cluster-api-provider-azure
       repo: cluster-api-provider-azure
