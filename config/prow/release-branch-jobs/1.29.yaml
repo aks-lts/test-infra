@@ -3,7 +3,6 @@
   - always_run: false
     branches:
     - release-1.29-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-conformance-kind-ipv6-parallel
     decorate: true
     labels:
@@ -43,7 +42,6 @@
   - always_run: true
     branches:
     - release-1.29-lts-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-dependencies
     decorate: true
     labels:
@@ -134,7 +132,6 @@
   - always_run: true
     branches:
     - release-1.29-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-kind
     decorate: true
     decoration_config:
@@ -173,7 +170,6 @@
   - always_run: true
     branches:
     - release-1.29-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-e2e-kind-ipv6
     decorate: true
     decoration_config:
@@ -216,7 +212,6 @@
   - always_run: true
     branches:
     - release-1.29-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-conformance-kind-ga-only-parallel
     decorate: true
     decoration_config:
@@ -253,7 +248,6 @@
   - always_run: true
     branches:
     - release-1.29-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-unit
     decorate: true
     labels:
@@ -282,7 +276,6 @@
   - always_run: true
     branches:
     - release-1.29-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-unit-go-compatibility
     decorate: true
     labels:
@@ -341,7 +334,6 @@
   - always_run: false
     branches:
     - release-1.29-lts
-    cluster: k8s-infra-prow-build
     context: pull-kubernetes-update
     decorate: true
     labels:
