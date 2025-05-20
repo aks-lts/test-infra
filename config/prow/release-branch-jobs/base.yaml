@@ -25,9 +25,6 @@ deck:
           name: podinfo
         required_files:
           - podinfo.json
-  rerun_auth_configs:
-    '*':
-      allow_anyone: true
 
 plank:
   job_url_prefix_config:
