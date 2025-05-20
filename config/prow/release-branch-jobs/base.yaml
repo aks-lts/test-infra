@@ -27,11 +27,7 @@ deck:
           - podinfo.json
   rerun_auth_configs:
     '*':
-      # You can look up its ID using this command, where the team slug is the hyphenated name:
-	    # curl -H "Authorization: token <token>" "https://api.github.com/orgs/<org-name>/teams/<team slug>"
-      # ref: https://docs.github.com/en/rest/teams/teams?apiVersion=2022-11-28#list-teams
-      github_team_ids:
-      - 13038351 # aks-lts-maintain
+      allow_anyone: true
 
 plank:
   job_url_prefix_config:
