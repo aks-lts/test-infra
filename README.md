@@ -3,6 +3,7 @@ LTS specific configuration and tooling for testing
 
 # workflows
 
+## Deployt LTS PROW to Azure
 * deploy-lts-prow.yaml
   * Automates https://docs.prow.k8s.io/docs/getting-started-deploy to set up or update the AKS LTS instance of Prow
   * Requires an Azure subscription with
@@ -19,26 +20,47 @@ LTS specific configuration and tooling for testing
     - `AZURE_CREDENTIALS` (output of `az ad sp create-for-rbac --role Contributor --sdk-auth --scope /subscriptions/$AZURE_SUBSCRIPTION/resourceGroups/$AZURE_RG`)
     - `APP_PRIVATE_KEY` (private key for GitHub App- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app); make sure to use the private key and not the client secret)
     - `HMAC_TOKEN` (generate randomly via `openssl rand -hex 20` and also set in GitHub App, see [Create the GitHub secrets](https://docs.prow.k8s.io/docs/getting-started-deploy/#create-the-github-secrets))
-  * Prow jobs for each K8S release need to be added manually:
-    - For an example, see https://github.com/aks-lts/test-infra/pull/9
-    - Create a new config file `config/prow/release-branch-jobs/<version>.yaml`
-    - Add a new line to the `Create job configs step` in `.github/workflows/deploy-lts-prow.yaml` 
-      (follow the existing pattern, i.e. `envsubst < config/prow/release-branch-jobs/<version>.yaml >> cm.yaml`)
-    - Go to the [kubernetes/test-infra](https://github.com/kubernetes/test-infra) repo and find the config file they use
-      for that version under [config/jobs/kubernetes/sig-release/release-branch-jobs](https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes/sig-release/release-branch-jobs). 
-      It might have been deleted already (when that version went out of support), so inspect the history of that folder and find the last version right before deletion.
-    - Copy only the `presubmits:` section of that file to the new config file you created (`config/prow/release-branch-jobs/<version>.yaml`)
-    - Remove all tests for a repo other than `kubernetes/kubernetes`, for example `kubernetes/perf-tests`
-    - Replace `kubernetes/kubernetes` with `$GITHUB_ORG/$GITHUB_REPO`
-    - Remove all the `cluster: ...` rows (`sed -i '' '/cluster: /d' <version>.yaml`)
-    - Remove all tests with `--provider=gce`
-    - In the `branches:` sections of the remaining jobs, make sure they contain the name of the LTS branch you want tests to run on (typically `release-<version>-lts`)
-    - Push these changes to a branch and run the [Deploy AKS LTS Prow](https://github.com/aks-lts/test-infra/actions/workflows/deploy-lts-prow.yaml) workflow
+
+# Add PROW Job Config for Each LTS Release
+  The PROW config for release is based on [kubernetes/test-infra](https://github.com/kubernetes/test-infra) repo. Please refer to https://github.com/aks-lts/test-infra/pull/42 for PR sample.
+
+  The PROW config files for all release are under [config/jobs/kubernetes/sig-release/release-branch-jobs](https://github.com/kubernetes/test-infra/tree/master/config/jobs/kubernetes/sig-release/release-branch-jobs). If the file of the target release is not found, it might have been deleted already (when that version went out of support), so inspect the commit history of that folder and find the last version right before deletion.
+
+## Add New PROW Config (AUTOMATED)
+  1. Find the URL of of the upstream config (ex: https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes/sig-release/release-branch-jobs/1.30.yaml).
+  1. Get the URL of the RAW version of upstream config (ex: https://raw.githubusercontent.com/kubernetes/test-infra/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/1.30.yaml). Note the host name is `raw.githubusercontent.com` instead of `github.com`
+  1. Run the script to generate the new PROW config
+    ```
+    ./hack/addProwConfigForRelease.sh {version} {URL to RAW upstream config}
+    ```
+    in case of 1.30:
+    ```
+    ./hack/addProwConfigForRelease.sh 1.30 https://raw.githubusercontent.com/kubernetes/test-infra/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/1.30.yaml
+    ```
+    
+  1. The script should update `.github/workflows/deploy-lts-prow.yaml` and generate a new file: `config/prow/release-branch-jobs/<version>.yaml`.
+     Sanity check the generated content with the MANUAL section.
+     `config/prow/release-branch-jobs/<version>.yaml` should have at least 13 jobs.
+
+## Add New PROW Config (MANUAL)
+  1. Add a new line to the `Create job configs step` in `.github/workflows/deploy-lts-prow.yaml` 
+    (follow the existing pattern, i.e. `envsubst < config/prow/release-branch-jobs/<version>.yaml >> cm.yaml`)
+  1. Create a new config file `config/prow/release-branch-jobs/<version>.yaml`.
+  1. Copy the content of the upstream config file to the new config file `config/prow/release-branch-jobs/<version>.yaml`.
+  1. Apply the following changes to the new config file:
+    - Remove everything that are not under the `presubmits:` section the config file.
+    - Remove all test jobs that are not under than `kubernetes/kubernetes`. For example, remove all tests under `kubernetes/perf-tests`.
+    - Remove all test jobs with `--provider=gce` under the `spec.containers.args`.
+    - Remove all test jobs with `preset-e2e-containerd-ec2` label
+    - Remove all rows with the `cluster: ...` (`sed -i '' '/cluster: /d' <version>.yaml`),
+    - In the `branches:` sections of the remaining jobs, make sure they contain the name of the LTS branch you want tests to run on (typically `release-<version>-lts`).
+
+## Test New PROW Config 
+    1. Push the changes to a new branch and run the [Deploy AKS LTS Prow](https://github.com/aks-lts/test-infra/actions/workflows/deploy-lts-prow.yaml) workflow
       for that branch (click "Run workflow" and select your branch). Make sure it succeeds.
-    - Create a test PR on the [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) repo. Make sure it targets the desired branch (`release-<version>-lts`).
-      Check if the tests run and succeed.
-    - If tests don't run or fail, check https://aka.ms/aks/prow. Some of them might need additional tweaking, e.g. request less CPU/memory 
-    - Once all is looking good, remember to merge the PR on this repo.
+    1. Create a test PR on the [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) repo. Make sure it targets the desired branch (`release-<version>-lts`). Check if the tests run and succeed.
+    1. If tests don't run or fail, check https://aka.ms/aks/prow. Some of them might need additional tweaking, e.g. request less CPU/memory 
+    1. Once all is looking good, remember to merge the PR on this repo.
 
 # Updating image tags
 ## PROW (K8S_PROW_IMAGE_TAG)
