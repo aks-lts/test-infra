@@ -99,7 +99,15 @@ if 'presubmits' in data and 'kubernetes/kubernetes' in data['presubmits']:
                 jobName = job['name']
                 print(f'  Skip: {jobName}')
                 continue
-        
+
+            # If job has 'spec' and 'containers', check for '--provider=gce' in args
+            if 'spec' in job  and 'containers' in job['spec'] and job['spec']['containers']:
+                args = job['spec']['containers'][0].get('args', [])
+                if any('gcp-zone=' in arg for arg in args):
+                    jobName = job['name']
+                    print(f'  Skip: {jobName}')
+                    continue
+
         # Remove cluster field if it exists
         if 'cluster' in job:
             del job['cluster']
