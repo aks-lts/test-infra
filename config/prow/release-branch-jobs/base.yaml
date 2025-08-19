@@ -184,6 +184,8 @@ tide:
         - do-not-merge/invalid-owners-file
       orgs:
         - $GITHUB_ORG
+  merge_method:
+    $GITHUB_ORG/$GITHUB_REPO: squash
 
 decorate_all_jobs: true
 
