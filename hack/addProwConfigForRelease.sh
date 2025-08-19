@@ -67,81 +67,119 @@ TMP_UPSTREAM_CONFIG_FILE="tmp/${VERSION}.yaml"
 mkdir -p "$(dirname "${TMP_UPSTREAM_CONFIG_FILE}")"
 curl -s "${UPSTREAM_CONFIG_URL}" -o "${TMP_UPSTREAM_CONFIG_FILE}"
 
-# Run python code to process the new config file
-python3 -c "
-import ruamel.yaml # can be installed with pip install ruamel.yaml
-from io import StringIO
-import sys
-import re
+# Run python code to process the new config file using raw text so we preserve original formatting
+python3 - <<PYEOF
+import re, sys, os
+version = "${VERSION}"
+raw_path = "${UPSTREAM_CONFIG_URL}"
+in_file = "${TMP_UPSTREAM_CONFIG_FILE}"
+out_file = "${NEW_CONFIG_FILE}"
 
-yaml = ruamel.yaml.YAML()
-yaml.preserve_quotes = True
-yaml.default_flow_style = False
+with open(in_file,'r') as f:
+    lines = f.readlines()
 
-# Read the YAML file
-with open('${TMP_UPSTREAM_CONFIG_FILE}', 'r') as f:
-    content = f.read()
+# Locate presubmits -> kubernetes/kubernetes section
+presubmits_start = None
+kk_start = None
+for i,l in enumerate(lines):
+    if presubmits_start is None and re.match(r'^\s*presubmits:\s*$', l):
+        presubmits_start = i
+    if presubmits_start is not None and kk_start is None and re.match(r'^\s*kubernetes/kubernetes:\s*$', l):
+        kk_start = i
+        break
 
-# Parse the yaml
-data = yaml.load(content)
+if kk_start is None:
+    print('ERROR: Could not find presubmits.kubernetes/kubernetes in upstream config', file=sys.stderr)
+    sys.exit(1)
 
-# Get a list of relevant jobs
-if 'presubmits' in data and 'kubernetes/kubernetes' in data['presubmits']:
-    jobs = data['presubmits']['kubernetes/kubernetes']
-    print(f'Total presubmits.kubernetes/kubernetes jobs: {len(jobs)}')
-    
-    kept_jobs_list = []
-    for job in jobs:
-        
-        # If job name has 'gce' or 'ec2', skip it
-        if 'name' in job:
-            if 'gce' in job['name'] or 'ec2' in job['name']:
-                jobName = job['name']
-                print(f'  Skip: {jobName}')
+# Collect block lines until another repo key at same indent or end of file
+block_lines = []
+base_indent_match = re.match(r'^(\s*)kubernetes/kubernetes:', lines[kk_start])
+base_indent = base_indent_match.group(1) if base_indent_match else '  '
+for l in lines[kk_start+1:]:
+    if re.match(r'^%s[^\s-][^:]*:' % base_indent, l) and not l.lstrip().startswith('- '):
+        # another repo key at same level
+        break
+    block_lines.append(l)
+
+# Split jobs: jobs start with base_indent + '-'
+jobs = []
+current = []
+for l in block_lines:
+    if re.match(r'^%s\s' % re.escape(base_indent + '-'), l):  # handle '- ' immediately after base indent
+        if current:
+            jobs.append(current)
+            current = []
+    elif re.match(r'^%s-' % re.escape(base_indent), l):
+        if current:
+            jobs.append(current)
+            current = []
+    if re.match(r'^%s-' % re.escape(base_indent), l):
+        current.append(l)
+    else:
+        if current:
+            current.append(l)
+if current:
+    jobs.append(current)
+
+kept = []
+name_re = re.compile(r'^\s*-\s*name:\s*(\S+)')
+for job in jobs:
+    text = ''.join(job)
+    m = name_re.search(job[0]) or any(name_re.search(x) for x in job)
+    # Extract job name if present
+    job_name = None
+    for ln in job:
+        nm = re.match(r'^\s*name:\s*(\S+)', ln)
+        if nm:
+            job_name = nm.group(1)
+            break
+    # Filtering rules
+    if job_name and ('gce' in job_name or 'ec2' in job_name):
+        print(f'SKIP name contains gce/ec2: {job_name}')
+        continue
+    if re.search(r'--provider=gce', text) or re.search(r'gcp-zone=', text):
+        print(f'SKIP provider gcp-zone in {job_name}')
+        continue
+    if re.search(r'preset-e2e-containerd-ec2', text):
+        print(f'SKIP preset-e2e-containerd-ec2 in {job_name}')
+        continue
+    # Remove cluster: lines
+    filtered_job = [ln for ln in job if not re.search(r'^\s*cluster:\s', ln)]
+    # Replace release-<version> with -lts if not already suffixed
+    repl_pattern = re.compile(rf'release-{re.escape(version)}(?!-lts)')
+    filtered_job = [repl_pattern.sub(f'release-{version}-lts', ln) for ln in filtered_job]
+    kept.append(filtered_job)
+    print(f'SAVE job {job_name}')
+
+print(f'Total upstream jobs collected: {len(jobs)}')
+print(f'Keeping: {len(kept)}')
+
+if len(kept) < 13:
+    print('WARNING: fewer than 13 jobs after filtering (README expectation).', file=sys.stderr)
+
+# Write output preserving original per-line formatting, just add two-space indent to each line
+with open(out_file,'w') as out:
+    # header
+    mpath = re.search(r'(config/jobs/kubernetes/sig-release/release-branch-jobs/[^/]+\.yaml)', raw_path)
+    config_path = mpath.group(1) if mpath else os.path.basename(raw_path)
+    out.write(f'# {version}-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml\n')
+    out.write(f'# Based on {config_path}\n')
+    for job in kept:
+        for ln in job:
+            if not ln.strip():
+                out.write('\n')
                 continue
+            # Remove the original base indentation so we only end up with exactly two leading spaces
+            if ln.startswith(base_indent):
+                norm = ln[len(base_indent):]
+            else:
+                # fallback: strip leading spaces to avoid cascading indentation growth
+                norm = ln.lstrip()
+            out.write('  ' + norm.rstrip() + '\n')
 
-            # If job has 'spec' and 'containers', check for '--provider=gce' in args
-            if 'spec' in job  and 'containers' in job['spec'] and job['spec']['containers']:
-                args = job['spec']['containers'][0].get('args', [])
-                if any('gcp-zone=' in arg for arg in args):
-                    jobName = job['name']
-                    print(f'  Skip: {jobName}')
-                    continue
+print(f'✅ PROW config saved to: {out_file}')
+PYEOF
 
-        # Remove cluster field if it exists
-        if 'cluster' in job:
-            del job['cluster']
-        
-        # Update branches to release-<version>-lts format
-        if 'branches' in job:
-            job['branches'] = [f'release-${VERSION}-lts']
-        
-        kept_jobs_list.append(job)
-        print(f'Keep: {job[\"name\"]}')
-    
-    # Write the filtered data back to the YAML file
-    
-    with open('${NEW_CONFIG_FILE}', 'w') as f:
-
-        # Extract the config path from the URL
-        url_path_match = re.search(r'(config/jobs/kubernetes/sig-release/release-branch-jobs/[^/]+\.yaml)', '${UPSTREAM_CONFIG_URL}')
-        config_path = url_path_match.group(1) if url_path_match else '$(basename \"${UPSTREAM_CONFIG_URL}\")'
-        
-        # Write the header comment
-        f.write('# ${VERSION}-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml\\n')
-        f.write(f'# Based on {config_path}\\n')
-        
-        # Dump the YAML content
-        stream = StringIO()
-        yaml.dump(kept_jobs_list, stream)
-        yaml_content = stream.getvalue()
-        
-        # Add two spaces before each line of YAML content to align with base.yaml
-        indented_yaml = '\\n'.join('  ' + line if line.strip() else line for line in yaml_content.split('\\n'))
-        f.write(indented_yaml)
-    
-    print(f'Final Job Count: {len(kept_jobs_list)}')
-    print(f'✅ PROW config saved to: ${NEW_CONFIG_FILE}')
-"
-# clean up
-rm -rf "$(dirname "${TMP_UPSTREAM_CONFIG_FILE}")"
+# (Optional) Leave temp file for troubleshooting; uncomment to remove
+# rm -f "${TMP_UPSTREAM_CONFIG_FILE}"

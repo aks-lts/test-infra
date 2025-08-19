@@ -50,10 +50,11 @@ LTS specific configuration and tooling for testing
   1. Apply the following changes to the new config file:
       - Remove everything that are not under the `presubmits:` section the config file.
       - Remove all test jobs that are not under than `kubernetes/kubernetes`. For example, remove all tests under `kubernetes/perf-tests`.
-      - Remove all test jobs with `--provider=gce` under the `spec.containers.args`.
+      - Remove all test jobs with `--provider=gce` or `--gcp-zone=` under the `spec.containers.args`.
       - Remove all test jobs with `preset-e2e-containerd-ec2` label
       - Remove all rows with the `cluster: ...` (`sed -i '' '/cluster: /d' <version>.yaml`),
-      - In the `branches:` sections of the remaining jobs, make sure they contain the name of the LTS branch you want tests to run on (typically `release-<version>-lts`).
+      - Replece all mentions of `release-<version>` to `release-<version>-lts` (i.e. the name of the LTS branch you want tests to run on), includeing the `branches:` sections of the jobs.
+  1. Ensure that formatting and styling matches with the YAML file of previous release branch jobs.
 
 ## Test New PROW Config 
 
