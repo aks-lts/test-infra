@@ -33,3 +33,5 @@ logexporter/cmd/logexporter
 
 # artifacts
 package-lock.json
+
+tmp/*

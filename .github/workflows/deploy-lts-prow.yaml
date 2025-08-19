@@ -77,12 +77,31 @@ jobs:
       - name: Install Kubectl
         uses: azure/setup-kubectl@v4
 
+      # Use admin credentials temporarily to bootstrap RBAC for the GitHub OIDC identity
+      - name: Set AKS cluster context (admin bootstrap)
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AZURE_RG }}
+          cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
+          admin: 'true'
+
+      - name: Grant cluster-admin to GitHub OIDC identity
+        run: |
+          set -e
+          OBJ_ID=$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --query id -o tsv 2>/dev/null || echo ${{ secrets.AZURE_CLIENT_ID }})
+          echo "Using object id: $OBJ_ID"
+          if ! kubectl get clusterrolebinding prow-github-oidc-admin >/dev/null 2>&1; then
+            kubectl create clusterrolebinding prow-github-oidc-admin --clusterrole=cluster-admin --user=$OBJ_ID
+          else
+            echo "ClusterRoleBinding prow-github-oidc-admin already exists"
+          fi
+
       - name: Set up kubelogin for non-interactive login
         uses: azure/use-kubelogin@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set AKS cluster context
+      - name: Set AKS cluster context (oidc)
         uses: azure/aks-set-context@v4
         with:
           resource-group: ${{ secrets.AZURE_RG }}
