@@ -27,7 +27,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         kubeletDiskType: 'OS'
         maxPods: 110
         type: 'VirtualMachineScaleSets'
-        maxCount: 3
+        maxCount: 5
         minCount: 2
         count: 2
         enableAutoScaling: true
@@ -43,7 +43,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         kubeletDiskType: 'OS'
         maxPods: 110
         type: 'VirtualMachineScaleSets'
-        maxCount: 3
+        maxCount: 5
         minCount: 1
         count: 2
         enableAutoScaling: true
@@ -177,6 +177,19 @@ resource storageContributorPermission 'Microsoft.Authorization/roleAssignments@2
     description: 'Allow aks cloud-provider to manage the storage account'
   }
 }
+
+resource aksRbacReaderPermission 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('aks-rbac-reader', aks.id, sa.id)
+  scope: aks
+  properties: {
+    roleDefinitionId: subscriptionResourceId(subscription().subscriptionId, 'Microsoft.Authorization/roleDefinitions', '7f6c6a51-bcf8-42ba-9220-52d62157d7db') // AKS Kubernetes RBAC Reader
+    principalId: aks.identity.principalId
+    principalType: 'ServicePrincipal'
+    description: 'Cluster-wide read-only (Kubernetes RBAC Reader) assignment'
+  }
+}
+
+
 
 output aksClusterName string = aks.name
 output resourceGroupName string = resourceGroup().name
