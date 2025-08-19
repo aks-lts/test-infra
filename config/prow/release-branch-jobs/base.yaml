@@ -185,8 +185,12 @@ tide:
       orgs:
         - $GITHUB_ORG
   merge_method:
-    $GITHUB_ORG/kubernetes: squash
-    $GITHUB_ORG/test-infra: squash
+    $GITHUB_ORG/kubernetes:
+      - merge
+      - squash
+    $GITHUB_ORG/test-infra:
+      - merge
+      - squash
 
 decorate_all_jobs: true
 
