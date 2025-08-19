@@ -161,10 +161,12 @@ if len(kept) < 13:
 # Write output preserving original per-line formatting, just add two-space indent to each line
 with open(out_file,'w') as out:
     # header
-    mpath = re.search(r'(config/jobs/kubernetes/sig-release/release-branch-jobs/[^/]+\.yaml)', raw_path)
-    config_path = mpath.group(1) if mpath else os.path.basename(raw_path)
+    if raw_path.startswith('https://raw.githubusercontent.com/kubernetes/test-infra/'):
+        github_url = raw_path.replace('https://raw.githubusercontent.com/kubernetes/test-infra/', 'https://github.com/kubernetes/test-infra/blob/', 1)
+    else:
+        github_url = raw_path  # fallback
     out.write(f'# {version}-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml\n')
-    out.write(f'# Based on {config_path}\n')
+    out.write(f'# Based on {github_url}\n')
     for job in kept:
         for ln in job:
             if not ln.strip():
@@ -182,4 +184,4 @@ print(f'✅ PROW config saved to: {out_file}')
 PYEOF
 
 # (Optional) Leave temp file for troubleshooting; uncomment to remove
-# rm -f "${TMP_UPSTREAM_CONFIG_FILE}"
+rm -f "${TMP_UPSTREAM_CONFIG_FILE}"
