@@ -4,8 +4,8 @@
     context: pull-kubernetes-conformance-kind-ipv6-parallel
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     max_concurrency: 8
     name: pull-kubernetes-conformance-kind-ipv6-parallel
     optional: true
@@ -20,11 +20,11 @@
         - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: DOCKER_IN_DOCKER_IPV6_ENABLED
-          value: 'true'
+          value: "true"
         - name: IP_FAMILY
           value: ipv6
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
         name: ''
         resources:
@@ -42,8 +42,8 @@
     context: pull-kubernetes-dependencies
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-dependencies
     path_alias: k8s.io/kubernetes
     spec:
@@ -73,8 +73,8 @@
     context: pull-kubernetes-integration
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-integration
     path_alias: k8s.io/kubernetes
     spec:
@@ -105,8 +105,8 @@
     context: pull-kubernetes-integration-go-compatibility
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-integration-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -140,7 +140,7 @@
       grace_period: 15m0s
       timeout: 1h0m0s
     labels:
-      preset-dind-enabled: 'true'
+      preset-dind-enabled: "true"
     name: pull-kubernetes-e2e-kind
     path_alias: k8s.io/kubernetes
     spec:
@@ -156,7 +156,7 @@
         - name: SKIP
           value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|PodSecurityPolicy|LoadBalancer|load.balancer|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing|NFS|nfs|inline.execution.and.attach|should.be.rejected.when.no.endpoints.exist
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
         name: ''
         resources:
@@ -177,7 +177,7 @@
       grace_period: 15m0s
       timeout: 1h0m0s
     labels:
-      preset-dind-enabled: 'true'
+      preset-dind-enabled: "true"
     name: pull-kubernetes-e2e-kind-ipv6
     path_alias: k8s.io/kubernetes
     spec:
@@ -193,9 +193,9 @@
         - name: SKIP
           value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|\[sig-storage\]|PodSecurityPolicy|LoadBalancer|load.balancer|In-tree.Volumes.\[Driver:.nfs\]|PersistentVolumes.NFS|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         - name: DOCKER_IN_DOCKER_IPV6_ENABLED
-          value: 'true'
+          value: "true"
         - name: IP_FAMILY
           value: ipv6
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
@@ -218,7 +218,7 @@
       grace_period: 15m0s
       timeout: 1h0m0s
     labels:
-      preset-dind-enabled: 'true'
+      preset-dind-enabled: "true"
     name: pull-kubernetes-conformance-kind-ga-only-parallel
     path_alias: k8s.io/kubernetes
     spec:
@@ -230,9 +230,9 @@
         - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: GA_ONLY
-          value: 'true'
+          value: "true"
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
         name: ''
         resources:
@@ -250,7 +250,7 @@
     context: pull-kubernetes-unit
     decorate: true
     labels:
-      preset-service-account: 'true'
+      preset-service-account: "true"
     name: pull-kubernetes-unit
     path_alias: k8s.io/kubernetes
     spec:
@@ -278,7 +278,7 @@
     context: pull-kubernetes-unit-go-compatibility
     decorate: true
     labels:
-      preset-service-account: 'true'
+      preset-service-account: "true"
     name: pull-kubernetes-unit-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -336,8 +336,8 @@
     context: pull-kubernetes-update
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-update
     path_alias: k8s.io/kubernetes
     spec:
@@ -373,8 +373,8 @@
     context: pull-kubernetes-verify
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-verify
     path_alias: k8s.io/kubernetes
     spec:
