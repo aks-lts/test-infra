@@ -354,11 +354,10 @@
         - name: EXCLUDE_GODEP
           value: "y"
         - name: KUBE_VERIFY_GIT_BRANCH
-          value: release-1.30
+          value: release-1.30-lts
         - name: REPO_DIR
           value: /workspace/k8s.io/kubernetes
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         imagePullPolicy: Always
         name: ""
         resources:
@@ -392,11 +391,10 @@
         - name: EXCLUDE_GODEP
           value: "y"
         - name: KUBE_VERIFY_GIT_BRANCH
-          value: release-1.30
+          value: release-1.30-lts
         - name: REPO_DIR
           value: /workspace/k8s.io/kubernetes
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         imagePullPolicy: Always
         name: ""
         resources:
@@ -423,8 +421,7 @@
         - WHAT=golangci-lint-pr-hints
         command:
         - make
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         name: ""
         resources:
           limits:
