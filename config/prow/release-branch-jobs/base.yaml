@@ -184,10 +184,6 @@ tide:
         - do-not-merge/invalid-owners-file
       orgs:
         - $GITHUB_ORG
-  merge_method:
-  # Prow expects a single merge method string per repo, not a list. Choose 'merge'.
-  $GITHUB_ORG/kubernetes: merge
-  $GITHUB_ORG/test-infra: squash
 
 decorate_all_jobs: true
 
