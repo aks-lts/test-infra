@@ -19,8 +19,7 @@
         - wrapper.sh
         - bash
         - -c
-        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz 
-          - -C "${PATH%%:*}/" && e2e-k8s.sh
+        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: DOCKER_IN_DOCKER_IPV6_ENABLED
           value: "true"
@@ -59,8 +58,7 @@
         env:
         - name: WHAT
           value: external-dependencies-version vendor vendor-licenses
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         name: main
         resources:
           limits:
@@ -92,8 +90,7 @@
           value: "8"
         - name: KUBE_TIMEOUT
           value: -timeout=1h30m
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         name: ""
         resources:
           limits:
@@ -125,8 +122,7 @@
           value: 1.22.1
         - name: KUBE_HACK_TOOLS_GOTOOLCHAIN
           value: auto
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         name: ""
         resources:
           limits:
@@ -155,14 +151,12 @@
         - wrapper.sh
         - bash
         - -c
-        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz 
-          - -C "${PATH%%:*}/" && e2e-k8s.sh
+        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: FOCUS
           value: .
         - name: SKIP
-          value: 
-            \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|PodSecurityPolicy|LoadBalancer|load.balancer|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing|NFS|nfs|inline.execution.and.attach|should.be.rejected.when.no.endpoints.exist
+          value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|PodSecurityPolicy|LoadBalancer|load.balancer|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing|NFS|nfs|inline.execution.and.attach|should.be.rejected.when.no.endpoints.exist
         - name: PARALLEL
           value: "true"
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
@@ -194,8 +188,7 @@
         - wrapper.sh
         - bash
         - -c
-        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz 
-          - -C "${PATH%%:*}/" && e2e-k8s.sh
+        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: FOCUS
           value: .
@@ -237,8 +230,7 @@
         - wrapper.sh
         - bash
         - -c
-        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz 
-          - -C "${PATH%%:*}/" && e2e-k8s.sh
+        - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: GA_ONLY
           value: "true"
@@ -269,8 +261,7 @@
       - command:
         - make
         - test
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         name: ""
         resources:
           limits:
@@ -303,8 +294,7 @@
           value: 1.22.1
         - name: KUBE_HACK_TOOLS_GOTOOLCHAIN
           value: auto
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         name: ""
         resources:
           limits:
@@ -334,8 +324,7 @@
         env:
         - name: WHAT
           value: typecheck typecheck-providerless
-        image: 
-          gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         name: main
         resources:
           limits:
