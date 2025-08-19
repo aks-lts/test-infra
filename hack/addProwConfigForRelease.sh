@@ -69,16 +69,21 @@ curl -s "${UPSTREAM_CONFIG_URL}" -o "${TMP_UPSTREAM_CONFIG_FILE}"
 
 # Run python code to process the new config file
 python3 -c "
-import yaml
+import ruamel.yaml # can be installed with pip install ruamel.yaml
+from io import StringIO
 import sys
 import re
+
+yaml = ruamel.yaml.YAML()
+yaml.preserve_quotes = True
+yaml.default_flow_style = False
 
 # Read the YAML file
 with open('${TMP_UPSTREAM_CONFIG_FILE}', 'r') as f:
     content = f.read()
 
 # Parse the yaml
-data = yaml.safe_load(content)
+data = yaml.load(content)
 
 # Get a list of relevant jobs
 if 'presubmits' in data and 'kubernetes/kubernetes' in data['presubmits']:
@@ -116,10 +121,12 @@ if 'presubmits' in data and 'kubernetes/kubernetes' in data['presubmits']:
         
         # Write the header comment
         f.write('# ${VERSION}-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml\\n')
-        f.write('# Based on {config_path}\\n')
+        f.write(f'# Based on {config_path}\\n')
         
         # Dump the YAML content
-        yaml_content = yaml.dump(kept_jobs_list, default_flow_style=False, sort_keys=False, width=float('inf'))
+        stream = StringIO()
+        yaml.dump(kept_jobs_list, stream)
+        yaml_content = stream.getvalue()
         
         # Add two spaces before each line of YAML content to align with base.yaml
         indented_yaml = '\\n'.join('  ' + line if line.strip() else line for line in yaml_content.split('\\n'))
