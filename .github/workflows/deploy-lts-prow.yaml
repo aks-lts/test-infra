@@ -77,18 +77,13 @@ jobs:
       - name: Install Kubectl
         uses: azure/setup-kubectl@v4
 
-      - name: Set up kubelogin for non-interactive login
-        uses: azure/use-kubelogin@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set AKS cluster context
+      # Acquire admin kubeconfig using cert-based credentials (not AAD token) so we have cluster-admin RBAC
+      - name: Set AKS cluster context (admin)
         uses: azure/aks-set-context@v4
         with:
           resource-group: ${{ secrets.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
-          admin: 'false'
-          use-kubelogin: 'true'
+          admin: 'true'
 
       - name: 'Apply Prow base manifests'
         run: |
