@@ -11,16 +11,18 @@ LTS specific configuration and tooling for testing
     - a service principal (run `az ad sp create-for-rbac --role Contributor --sdk-auth --scope /subscriptions/$AZURE_SUBSCRIPTION/resourceGroups/$AZURE_RG` and use output for `AZURE_CREDENTIALS` below)
     - registration of the Microsoft.Cdn resource provider (run `az provider register --namespace Microsoft.Cdn`)
   * Requires variables:
-    - `APP_ID`  (GitHub AppId, e.g. `12345`- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app))
-    - `ORG` (GitHub org, e.g. `aks-lts`)
-    - `REPO` (GitHub repo, e.g. `kubernetes`)
-    - `AZURE_SUBSCRIPTION` (Azure subscription associated with Azure credentials below)
-    - `AZURE_RG` (Existing Azure resource group to use for deployment, e.g. `aks-lts-prow`)
+    - `APP_ID`: App ID of the PROW GitHub App, e.g. `12345`- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app)
+    - `CLIENT_ID`: Client ID of the PROW GitHub App.
+    - `ORG`: GitHub org, e.g. `aks-lts`
+    - `REPO`: GitHub repo, e.g. `kubernetes`
+    - `AZURE_SUBSCRIPTION`: Azure subscription associated with Azure credentials below
+    - `AZURE_RG`: Existing Azure resource group to use for deployment, e.g. `aks-lts-prow`
   * Required secrets:
-    - `AZURE_CREDENTIALS` (output of `az ad sp create-for-rbac --role Contributor --sdk-auth --scope /subscriptions/$AZURE_SUBSCRIPTION/resourceGroups/$AZURE_RG`)
-    - `APP_PRIVATE_KEY` (private key for GitHub App- see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app); make sure to use the private key and not the client secret)
-    - `HMAC_TOKEN` (generate randomly via `openssl rand -hex 20` and also set in GitHub App, see [Create the GitHub secrets](https://docs.prow.k8s.io/docs/getting-started-deploy/#create-the-github-secrets))
-
+    - `AZURE_CREDENTIALS`: Output of `az ad sp create-for-rbac --role Contributor --sdk-auth --scope /subscriptions/$AZURE_SUBSCRIPTION/resourceGroups/$AZURE_RG`
+    - `APP_CLIENT_SECRET`: Client secrets of the PROW GitHub App
+    - `APP_PRIVATE_KEY`: Private key for the PROW GitHub App. see [GitHub App](https://docs.prow.k8s.io/docs/getting-started-deploy/#github-app). It is the private key (at the bottom of the GITHUB App settings) and NOT the client secret.
+    - `HMAC_TOKEN`: Generate randomly via `openssl rand -hex 20` and also set in GitHub App. See [Create the GitHub secrets](https://docs.prow.k8s.io/docs/getting-started-deploy/#create-the-github-secrets) for details.
+    - `APP_COOKIE`: Generate randomly via `openssl rand -base64 32`. See [How to setup GitHub Oauth](https://docs.prow.k8s.io/docs/components/core/deck/github-oauth-setup/#set-up-secrets) for details.
 # Add PROW Job Config for Each LTS Release
   The PROW config for release is based on [kubernetes/test-infra](https://github.com/kubernetes/test-infra) repo. Please refer to https://github.com/aks-lts/test-infra/pull/42 for PR sample.
 
