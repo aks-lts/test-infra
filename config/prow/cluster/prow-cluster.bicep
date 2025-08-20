@@ -27,7 +27,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         kubeletDiskType: 'OS'
         maxPods: 110
         type: 'VirtualMachineScaleSets'
-        maxCount: 3
+        maxCount: 5
         minCount: 2
         count: 2
         enableAutoScaling: true
@@ -43,7 +43,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         kubeletDiskType: 'OS'
         maxPods: 110
         type: 'VirtualMachineScaleSets'
-        maxCount: 3
+        maxCount: 5
         minCount: 1
         count: 2
         enableAutoScaling: true

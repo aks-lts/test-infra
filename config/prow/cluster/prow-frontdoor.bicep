@@ -59,6 +59,9 @@ resource prowOrigin 'Microsoft.Cdn/profiles/origingroups/origins@2022-11-01-prev
 resource azureProwEndpointToOrigin 'Microsoft.Cdn/profiles/afdendpoints/routes@2022-11-01-preview' = {
   parent: azureProwEndpoint
   name: 'default-route'
+  dependsOn: [
+    prowOrigin
+  ]
   properties: {
     customDomains: []
     originGroup: {

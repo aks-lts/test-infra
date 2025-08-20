@@ -1,11 +1,13 @@
+# 1.30-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
+# Based on https://github.com/kubernetes/test-infra/blob/5731147094082a792cd0ac158a1f371c76c56b60/config/jobs/kubernetes/sig-release/release-branch-jobs/1.30.yaml
   - always_run: false
     branches:
     - release-1.30-lts
     context: pull-kubernetes-conformance-kind-ipv6-parallel
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     max_concurrency: 8
     name: pull-kubernetes-conformance-kind-ipv6-parallel
     optional: true
@@ -20,19 +22,19 @@
         - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: DOCKER_IN_DOCKER_IPV6_ENABLED
-          value: 'true'
+          value: "true"
         - name: IP_FAMILY
           value: ipv6
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '4'
+            cpu: "4"
             memory: 9000Mi
           requests:
-            cpu: '4'
+            cpu: "4"
             memory: 9000Mi
         securityContext:
           privileged: true
@@ -42,8 +44,8 @@
     context: pull-kubernetes-dependencies
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-dependencies
     path_alias: k8s.io/kubernetes
     spec:
@@ -60,10 +62,10 @@
         name: main
         resources:
           limits:
-            cpu: '2'
+            cpu: "2"
             memory: 1288490188800m
           requests:
-            cpu: '2'
+            cpu: "2"
             memory: 1288490188800m
         securityContext:
           privileged: true
@@ -73,8 +75,8 @@
     context: pull-kubernetes-integration
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-integration
     path_alias: k8s.io/kubernetes
     spec:
@@ -85,17 +87,17 @@
         - runner.sh
         env:
         - name: KUBE_INTEGRATION_TEST_MAX_CONCURRENCY
-          value: '8'
+          value: "8"
         - name: KUBE_TIMEOUT
           value: -timeout=1h30m
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '8'
+            cpu: "8"
             memory: 20Gi
           requests:
-            cpu: '8'
+            cpu: "8"
             memory: 20Gi
         securityContext:
           privileged: true
@@ -105,8 +107,8 @@
     context: pull-kubernetes-integration-go-compatibility
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-integration-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -121,13 +123,13 @@
         - name: KUBE_HACK_TOOLS_GOTOOLCHAIN
           value: auto
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '6'
+            cpu: "6"
             memory: 15Gi
           requests:
-            cpu: '6'
+            cpu: "6"
             memory: 15Gi
         securityContext:
           privileged: true
@@ -140,7 +142,7 @@
       grace_period: 15m0s
       timeout: 1h0m0s
     labels:
-      preset-dind-enabled: 'true'
+      preset-dind-enabled: "true"
     name: pull-kubernetes-e2e-kind
     path_alias: k8s.io/kubernetes
     spec:
@@ -156,15 +158,15 @@
         - name: SKIP
           value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|PodSecurityPolicy|LoadBalancer|load.balancer|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing|NFS|nfs|inline.execution.and.attach|should.be.rejected.when.no.endpoints.exist
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '7'
+            cpu: "7"
             memory: 9000Mi
           requests:
-            cpu: '7'
+            cpu: "7"
             memory: 9000Mi
         securityContext:
           privileged: true
@@ -177,7 +179,7 @@
       grace_period: 15m0s
       timeout: 1h0m0s
     labels:
-      preset-dind-enabled: 'true'
+      preset-dind-enabled: "true"
     name: pull-kubernetes-e2e-kind-ipv6
     path_alias: k8s.io/kubernetes
     spec:
@@ -193,19 +195,19 @@
         - name: SKIP
           value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|\[sig-storage\]|PodSecurityPolicy|LoadBalancer|load.balancer|In-tree.Volumes.\[Driver:.nfs\]|PersistentVolumes.NFS|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         - name: DOCKER_IN_DOCKER_IPV6_ENABLED
-          value: 'true'
+          value: "true"
         - name: IP_FAMILY
           value: ipv6
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '4'
+            cpu: "4"
             memory: 9Gi
           requests:
-            cpu: '4'
+            cpu: "4"
             memory: 9Gi
         securityContext:
           privileged: true
@@ -218,7 +220,7 @@
       grace_period: 15m0s
       timeout: 1h0m0s
     labels:
-      preset-dind-enabled: 'true'
+      preset-dind-enabled: "true"
     name: pull-kubernetes-conformance-kind-ga-only-parallel
     path_alias: k8s.io/kubernetes
     spec:
@@ -230,17 +232,17 @@
         - curl -sSL https://kind.sigs.k8s.io/dl/latest/linux-amd64.tgz | tar xvfz - -C "${PATH%%:*}/" && e2e-k8s.sh
         env:
         - name: GA_ONLY
-          value: 'true'
+          value: "true"
         - name: PARALLEL
-          value: 'true'
+          value: "true"
         image: gcr.io/k8s-staging-test-infra/krte:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '4'
+            cpu: "4"
             memory: 9Gi
           requests:
-            cpu: '4'
+            cpu: "4"
             memory: 9Gi
         securityContext:
           privileged: true
@@ -250,7 +252,7 @@
     context: pull-kubernetes-unit
     decorate: true
     labels:
-      preset-service-account: 'true'
+      preset-service-account: "true"
     name: pull-kubernetes-unit
     path_alias: k8s.io/kubernetes
     spec:
@@ -259,13 +261,13 @@
         - make
         - test
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '4'
+            cpu: "4"
             memory: 36Gi
           requests:
-            cpu: '4'
+            cpu: "4"
             memory: 36Gi
         securityContext:
           allowPrivilegeEscalation: false
@@ -278,7 +280,7 @@
     context: pull-kubernetes-unit-go-compatibility
     decorate: true
     labels:
-      preset-service-account: 'true'
+      preset-service-account: "true"
     name: pull-kubernetes-unit-go-compatibility
     path_alias: k8s.io/kubernetes
     spec:
@@ -292,13 +294,13 @@
         - name: KUBE_HACK_TOOLS_GOTOOLCHAIN
           value: auto
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '4'
+            cpu: "4"
             memory: 36Gi
           requests:
-            cpu: '4'
+            cpu: "4"
             memory: 36Gi
         securityContext:
           allowPrivilegeEscalation: false
@@ -325,10 +327,10 @@
         name: main
         resources:
           limits:
-            cpu: '5'
+            cpu: "5"
             memory: 32Gi
           requests:
-            cpu: '5'
+            cpu: "5"
             memory: 32Gi
   - always_run: false
     branches:
@@ -336,8 +338,8 @@
     context: pull-kubernetes-update
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-update
     path_alias: k8s.io/kubernetes
     spec:
@@ -348,22 +350,22 @@
         - runner.sh
         env:
         - name: EXCLUDE_TYPECHECK
-          value: y
+          value: "y"
         - name: EXCLUDE_GODEP
-          value: y
+          value: "y"
         - name: KUBE_VERIFY_GIT_BRANCH
-          value: release-1.30
+          value: release-1.30-lts
         - name: REPO_DIR
           value: /workspace/k8s.io/kubernetes
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         imagePullPolicy: Always
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '7'
+            cpu: "7"
             memory: 12Gi
           requests:
-            cpu: '7'
+            cpu: "7"
             memory: 12Gi
         securityContext:
           privileged: true
@@ -373,8 +375,8 @@
     context: pull-kubernetes-verify
     decorate: true
     labels:
-      preset-dind-enabled: 'true'
-      preset-service-account: 'true'
+      preset-dind-enabled: "true"
+      preset-service-account: "true"
     name: pull-kubernetes-verify
     path_alias: k8s.io/kubernetes
     spec:
@@ -385,22 +387,22 @@
         - runner.sh
         env:
         - name: EXCLUDE_TYPECHECK
-          value: y
+          value: "y"
         - name: EXCLUDE_GODEP
-          value: y
+          value: "y"
         - name: KUBE_VERIFY_GIT_BRANCH
-          value: release-1.30
+          value: release-1.30-lts
         - name: REPO_DIR
           value: /workspace/k8s.io/kubernetes
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
         imagePullPolicy: Always
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '7'
+            cpu: "7"
             memory: 12Gi
           requests:
-            cpu: '7'
+            cpu: "7"
             memory: 12Gi
         securityContext:
           privileged: true
@@ -420,11 +422,11 @@
         command:
         - make
         image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20250714-70266d743a-1.30
-        name: ''
+        name: ""
         resources:
           limits:
-            cpu: '5'
+            cpu: "5"
             memory: 12Gi
           requests:
-            cpu: '5'
+            cpu: "5"
             memory: 12Gi
