@@ -130,10 +130,10 @@ jobs:
         run: |
           echo "client_id: ${{ vars.CLIENT_ID }}" > github-oauth-config-file
           echo "client_secret: ${{ secrets.APP_CLIENT_SECRET }}" >> github-oauth-config-file
-          echo "redirect_url: $PROW_HOST/github-login/redirect" >> github-oauth-config-file
-          echo "final_redirect_url: $PROW_HOST/pr" >> github-oauth-config-file
-          echo "redirect_url: $PROW_HOST/github-login/redirect"
-          echo "final_redirect_url: $PROW_HOST/pr"
+          echo "redirect_url: https://$PROW_HOST/github-login/redirect" >> github-oauth-config-file
+          echo "final_redirect_url: https://$PROW_HOST/pr" >> github-oauth-config-file
+          echo "redirect_url: https://$PROW_HOST/github-login/redirect"
+          echo "final_redirect_url: https://$PROW_HOST/pr"
           kubectl create secret generic github-oauth-config -n prow --from-file=secret=github-oauth-config-file -o yaml --dry-run=client | kubectl apply -f -
           kubectl create secret generic github-oauth-config -n test-pods --from-file=secret=github-oauth-config-file -o yaml --dry-run=client | kubectl apply -f -
           rm github-oauth-config-file
