@@ -57,6 +57,10 @@ spec:
         - --spyglass=true
         - --github-app-id=$GITHUB_APP_ID
         - --github-app-private-key-path=/etc/github/cert
+        - --github-oauth-config-file=/etc/githuboauth/secret
+        - --oauth-url=/github-login
+        - --cookie-secret=/etc/cookie/secret
+        - --dry-run
         env:
         - name: GITHUB_APP_ID
           valueFrom:
@@ -78,6 +82,12 @@ spec:
           readOnly: true
         - name: s3-credentials
           mountPath: /etc/s3-credentials
+          readOnly: true
+        - name: oauth-config
+          mountPath: /etc/githuboauth
+          readOnly: true
+        - name: cookie-secret
+          mountPath: /etc/cookie
           readOnly: true
         livenessProbe:
           httpGet:
@@ -105,6 +115,12 @@ spec:
       - name: s3-credentials
         secret:
           secretName: s3-credentials
+      - name: oauth-config
+        secret:
+            secretName: github-oauth-config
+      - name: cookie-secret
+        secret:
+            secretName: cookie
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
