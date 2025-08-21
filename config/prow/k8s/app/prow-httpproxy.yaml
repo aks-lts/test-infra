@@ -9,16 +9,16 @@ spec:
   routes:
   - conditions:
     - prefix: /
-      headers:
-      - name: X-From-FrontDoor
+      header:
+        name: X-From-FrontDoor
         exact: $FRONTDOOR_SECRET
     services:
     - name: deck
       port: 80
   - conditions:
     - prefix: /hook
-      headers:
-      - name: X-From-FrontDoor
+      header:
+        name: X-From-FrontDoor
         exact: $FRONTDOOR_SECRET
     services:
     - name: hook
