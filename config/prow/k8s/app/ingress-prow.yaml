@@ -5,7 +5,7 @@ metadata:
   name: prow
 spec:
   rules:
-  - host: lts-prow.aks.azure.com # not necessarily a real domain, as long as it match with frontdoor Microsoft.Cdn/profiles/origingroups/origins.originHostHeader
+  - host: $PROW_HOST # will be substituted with the public Front Door host
     http:
       paths:
       - path: /
