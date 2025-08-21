@@ -117,10 +117,10 @@ spec:
           secretName: s3-credentials
       - name: oauth-config
         secret:
-            secretName: github-oauth-config
+          secretName: github-oauth-config
       - name: cookie-secret
         secret:
-            secretName: cookie
+          secretName: cookie
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
