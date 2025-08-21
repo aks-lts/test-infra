@@ -57,6 +57,7 @@ LTS specific configuration and tooling for testing
       - Remove all rows with the `cluster: ...` (`sed -i '' '/cluster: /d' <version>.yaml`),
       - Replece all mentions of `release-<version>` to `release-<version>-lts` (i.e. the name of the LTS branch you want tests to run on), includeing the `branches:` sections of the jobs.
   1. Ensure that formatting and styling matches with the YAML file of previous release branch jobs.
+  1. Jobs 'pull-kubernetes-linter-hints'and 'pull-kubernetes-verify' require at least 16G. If their memory is less than 16G, update them.
 
 ## Test New PROW Config 
 
