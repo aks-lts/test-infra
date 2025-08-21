@@ -7,6 +7,10 @@ param prow_vm_sku string = 'Standard_DS3_v2'
 param test_vm_sku string = 'Standard_D32d_v4'
 param storage_account_prefix string = 'prow'
 
+@secure()
+param frontDoorSecret string = ''
+
+
 resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
   name: '${aks_cluster_prefix}-${uniqueString(resourceGroup().id, aks_cluster_region)}'
   location: aks_cluster_region
@@ -164,6 +168,7 @@ module clusterIngressFrontDoor 'prow-frontdoor.bicep' = {
     namePrefix: aks_cluster_prefix
     location: aks_cluster_region
     ingressIP: ingresspip.properties.ipAddress
+    frontDoorSecret: frontDoorSecret
   }
 }
 
