@@ -102,7 +102,7 @@ resource prowRuleSet 'Microsoft.Cdn/profiles/ruleSets@2024-09-01' = {
 // treated as legitimate.
 resource prowRule 'Microsoft.Cdn/profiles/ruleSets/rules@2024-09-01' = {
   parent: prowRuleSet
-  name: 'add-frontdoor-header'
+  name: 'addFrontdoorHeader'
   properties: {
     order: 1
     actions: [
