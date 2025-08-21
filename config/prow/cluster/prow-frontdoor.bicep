@@ -91,7 +91,7 @@ resource azureProwEndpointToOrigin 'Microsoft.Cdn/profiles/afdendpoints/routes@2
 // Individual rules are added as child resources under the rule set.
 resource prowRuleSet 'Microsoft.Cdn/profiles/ruleSets@2024-09-01' = {
   parent: clusterIngressFrontdoor
-  name: 'add-header-rules'
+  name: 'addHeaderRules'
 }
 
 // Add a delivery rule that overwrites header `X-From-FrontDoor` with the

@@ -18,7 +18,6 @@ jobs:
       GITHUB_ORG: ${{ vars.ORG }}
       GITHUB_REPO: ${{ vars.REPO }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
-      FRONTDOOR_SECRET: ${{ secrets.FRONTDOOR_SECRET }}
       MINIO_CONSOLE_PORT: 8003
       K8S_PROW_IMAGE_TAG: v20240802-66b115076
     steps:
@@ -47,6 +46,12 @@ jobs:
               az group create --name ${{ secrets.CAPZ_RG }} --location ${{ secrets.AZURE_LOCATION }}
           fi
 
+      - name: Generate FRONTDOOR_SECRET
+        run: |
+          FRONTDOOR_SECRET=$(openssl rand -base64 32)
+          echo "::add-mask::$FRONTDOOR_SECRET"
+          echo "FRONTDOOR_SECRET=$FRONTDOOR_SECRET" >> "$GITHUB_ENV"
+
       - name: Deploy Prow cluster Bicep
         id: bicep
         uses: azure/arm-deploy@v2
@@ -54,7 +59,7 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
-          parameters: aks_cluster_region=${{ secrets.AZURE_LOCATION }} aks_cluster_admin_groups="${{ secrets.PROW_ADMIN_GROUPS }}" frontDoorSecret="${{ secrets.FRONTDOOR_SECRET }}"
+          parameters: aks_cluster_region=${{ secrets.AZURE_LOCATION }} aks_cluster_admin_groups="${{ secrets.PROW_ADMIN_GROUPS }}" frontDoorSecret="${{ env.FRONTDOOR_SECRET }}"
           failOnStdErr: false
 
       - name: Deploy CAPZ Bicep
