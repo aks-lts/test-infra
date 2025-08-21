@@ -152,4 +152,6 @@ rules:
       # Required when deck runs with `--rerun-creates-job=true`
       # **Warning:** Only use this for non-public deck instances, this allows
       # anyone with access to your Deck instance to create new Prowjobs
-      # - create
+      - create
+      # Required to abort jobs
+      - patch
