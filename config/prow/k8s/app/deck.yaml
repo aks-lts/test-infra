@@ -62,7 +62,6 @@ spec:
         - --github-oauth-config-file=/etc/githuboauth/secret
         - --oauth-url=/github-login
         - --cookie-secret=/etc/cookie/secret
-        - --dry-run
         env:
         - name: GITHUB_APP_ID
           valueFrom:
