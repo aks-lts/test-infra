@@ -25,6 +25,10 @@ deck:
           name: podinfo
         required_files:
           - podinfo.json
+  rerun_auth_configs:
+    '*':
+      github_team_ids:
+      - 13038351 # aks-lts-maintain
 
 plank:
   job_url_prefix_config:

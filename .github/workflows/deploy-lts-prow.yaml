@@ -46,6 +46,12 @@ jobs:
               az group create --name ${{ secrets.CAPZ_RG }} --location ${{ secrets.AZURE_LOCATION }}
           fi
 
+      - name: Generate FRONTDOOR_SECRET
+        run: |
+          FRONTDOOR_SECRET=$(openssl rand -base64 32)
+          echo "::add-mask::$FRONTDOOR_SECRET"
+          echo "FRONTDOOR_SECRET=$FRONTDOOR_SECRET" >> "$GITHUB_ENV"
+
       - name: Deploy Prow cluster Bicep
         id: bicep
         uses: azure/arm-deploy@v2
@@ -53,7 +59,7 @@ jobs:
           subscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           resourceGroupName: ${{ secrets.AZURE_RG }}
           template: ./config/prow/cluster/prow-cluster.bicep
-          parameters: aks_cluster_region=${{ secrets.AZURE_LOCATION }} aks_cluster_admin_groups="${{ secrets.PROW_ADMIN_GROUPS }}"
+          parameters: aks_cluster_region=${{ secrets.AZURE_LOCATION }} aks_cluster_admin_groups="${{ secrets.PROW_ADMIN_GROUPS }}" frontDoorSecret="${{ env.FRONTDOOR_SECRET }}"
           failOnStdErr: false
 
       - name: Deploy CAPZ Bicep
@@ -125,6 +131,23 @@ jobs:
           kubectl create secret generic github-token -n prow --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID -o yaml --dry-run=client | kubectl apply -f -
           kubectl create secret generic github-token -n test-pods --from-file=cert=cert.pem --from-literal=appid=$GITHUB_APP_ID -o yaml --dry-run=client | kubectl apply -f -
           rm cert.pem
+
+      - name: 'Setup GitHub Oauth Secrets'
+        run: |
+          echo "client_id: ${{ vars.CLIENT_ID }}" > github-oauth-config-file
+          echo "client_secret: ${{ secrets.APP_CLIENT_SECRET }}" >> github-oauth-config-file
+          echo "redirect_url: https://$PROW_HOST/github-login/redirect" >> github-oauth-config-file
+          echo "final_redirect_url: https://$PROW_HOST/pr" >> github-oauth-config-file
+          echo "redirect_url: https://$PROW_HOST/github-login/redirect"
+          echo "final_redirect_url: https://$PROW_HOST/pr"
+          kubectl create secret generic github-oauth-config -n prow --from-file=secret=github-oauth-config-file -o yaml --dry-run=client | kubectl apply -f -
+          kubectl create secret generic github-oauth-config -n test-pods --from-file=secret=github-oauth-config-file -o yaml --dry-run=client | kubectl apply -f -
+          rm github-oauth-config-file
+
+          openssl rand -out cookie.txt -base64 32
+          kubectl create secret generic cookie -n prow --from-file=secret=cookie.txt -o yaml --dry-run=client | kubectl apply -f -
+          kubectl create secret generic cookie -n test-pods --from-file=secret=cookie.txt -o yaml --dry-run=client | kubectl apply -f -
+          rm cookie.txt
 
       - name: Fetch storage key
         id: fetch-storage-key

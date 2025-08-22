@@ -1,8 +1,8 @@
+@minLength(3)
 param resource_prefix string = 'capz'
-@secure()
 param location string = resourceGroup().location
 
-param random_suffix string = substring(uniqueString(resourceGroup().id, location), 0, 8)
+var random_suffix = substring(uniqueString(resourceGroup().id, location), 0, 8)
 
 // https://github.com/kubernetes/k8s.io/tree/main/infra/azure/terraform/capz 
 // https://github.com/kubernetes/test-infra/blob/master/config/jobs/kubernetes-sigs/sig-windows/release-master-windows.yaml

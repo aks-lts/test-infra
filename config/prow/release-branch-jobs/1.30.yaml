@@ -400,10 +400,10 @@
         resources:
           limits:
             cpu: "7"
-            memory: 12Gi
+            memory: 16Gi
           requests:
             cpu: "7"
-            memory: 12Gi
+            memory: 16Gi
         securityContext:
           privileged: true
   - always_run: true
@@ -426,7 +426,7 @@
         resources:
           limits:
             cpu: "5"
-            memory: 12Gi
+            memory: 16Gi
           requests:
             cpu: "5"
-            memory: 12Gi
+            memory: 16Gi

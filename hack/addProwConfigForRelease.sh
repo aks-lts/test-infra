@@ -155,6 +155,36 @@ for job in jobs:
 print(f'Total upstream jobs collected: {len(jobs)}')
 print(f'Keeping: {len(kept)}')
 
+# Increase memory for specific jobs and log the change
+for i, job in enumerate(kept):
+    # find job name
+    job_name = None
+    for ln in job:
+        nm = re.match(r'^\s*name:\s*(\S+)', ln)
+        if nm:
+            job_name = nm.group(1)
+            break
+    if job_name in ('pull-kubernetes-linter-hints', 'pull-kubernetes-verify'):
+        updated = False
+        # update any existing memory lines
+        for idx, ln in enumerate(job):
+            m = re.match(r'^(\s*)memory:\s*(\S+)', ln)
+            if m:
+                indent, orig = m.group(1), m.group(2)
+                if orig != '16Gi':
+                    job[idx] = f"{indent}memory: 16Gi"
+                    print(f'Updated {job_name} memory: {orig} -> 16Gi')
+                    updated = True
+        # if no memory lines found, try to insert under limits if present
+        if not updated:
+            for idx, ln in enumerate(job):
+                if re.match(r'^\s*limits:\s*$', ln):
+                    # insert memory line after limits
+                    indent = re.match(r'^(\s*)', job[idx+1] if idx+1 < len(job) else ln).group(1)
+                    job.insert(idx+1, f"{indent}memory: 16Gi")
+                    print(f'Inserted memory: 16Gi for {job_name}')
+                    break
+
 if len(kept) < 13:
     print('WARNING: fewer than 13 jobs after filtering (README expectation).', file=sys.stderr)
 

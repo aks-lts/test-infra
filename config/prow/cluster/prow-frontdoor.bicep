@@ -1,6 +1,8 @@
 param namePrefix string
 param location string
 param ingressIP string
+@secure()
+param frontDoorSecret string = ''
 
 resource clusterIngressFrontdoor 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
   name: '${namePrefix}-${uniqueString(resourceGroup().id, location)}'
@@ -48,7 +50,7 @@ resource prowOrigin 'Microsoft.Cdn/profiles/origingroups/origins@2022-11-01-prev
     hostName: ingressIP
     httpPort: 80
     httpsPort: 443
-    originHostHeader: 'lts-prow.aks.azure.com' // as long as it matches with ingress-prow.yaml
+    originHostHeader: azureProwEndpoint.properties.hostName
     priority: 1
     weight: 1000
     enabledState: 'Enabled'
@@ -67,7 +69,11 @@ resource azureProwEndpointToOrigin 'Microsoft.Cdn/profiles/afdendpoints/routes@2
     originGroup: {
       id: prowOriginGroup.id
     }
-    ruleSets: []
+    ruleSets: [
+      {
+        id: prowRuleSet.id
+      }
+    ]
     supportedProtocols: [
       'Https'
     ]
@@ -78,6 +84,39 @@ resource azureProwEndpointToOrigin 'Microsoft.Cdn/profiles/afdendpoints/routes@2
     linkToDefaultDomain: 'Enabled'
     httpsRedirect: 'Enabled'
     enabledState: 'Enabled'
+  }
+}
+
+// Create an (empty) rule set resource. Azure manages the rule set properties.
+// Individual rules are added as child resources under the rule set.
+resource prowRuleSet 'Microsoft.Cdn/profiles/ruleSets@2024-09-01' = {
+  parent: clusterIngressFrontdoor
+  name: 'addHeaderRules'
+}
+
+// Add a delivery rule that overwrites header `X-From-FrontDoor` with the
+// secure value from the `frontDoorSecret` parameter.
+// Overwrite the X-From-FrontDoor header with a shared secret so backend
+// services can verify the request was proxied by Front Door and trust it.
+// This helps prevent direct requests that bypass Front Door from being
+// treated as legitimate.
+resource prowRule 'Microsoft.Cdn/profiles/ruleSets/rules@2024-09-01' = {
+  parent: prowRuleSet
+  name: 'addFrontdoorHeader'
+  properties: {
+    order: 1
+    actions: [
+      {
+        name: 'ModifyRequestHeader'
+        parameters: {
+          typeName: 'DeliveryRuleHeaderActionParameters'
+          headerAction: 'Overwrite'
+          headerName: 'X-From-FrontDoor'
+          value: frontDoorSecret
+        }
+      }
+    ]
+    conditions: []
   }
 }
 

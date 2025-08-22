@@ -1,0 +1,25 @@
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: prow-httpproxy
+  namespace: prow
+spec:
+  virtualhost:
+    fqdn: $PROW_HOST
+  routes:
+  - conditions:
+    - prefix: /
+      header:
+        name: X-From-FrontDoor
+        exact: $FRONTDOOR_SECRET
+    services:
+    - name: deck
+      port: 80
+  - conditions:
+    - prefix: /hook
+      header:
+        name: X-From-FrontDoor
+        exact: $FRONTDOOR_SECRET
+    services:
+    - name: hook
+      port: 8888
