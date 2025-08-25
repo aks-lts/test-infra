@@ -28,7 +28,7 @@ jobs:
           echo "FAKE_MOUNT_SECRET=$FAKE_MOUNT_SECRET" >> "$GITHUB_ENV"
 
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Azure login
         uses: azure/login@v2
