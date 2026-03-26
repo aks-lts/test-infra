@@ -22,7 +22,7 @@ on:
         required: true
         type: string
       upstream_config_url:
-        description: 'URL to raw upstream config (required for add, ignored for remove)'
+        description: 'URL to raw upstream config (optional for add — defaults to upstream kubernetes/test-infra for the given version)'
         required: false
         type: string
 
@@ -47,17 +47,17 @@ jobs:
 
           CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
 
-          if [ "$ACTION" = "add" ]; then
-            if [ -z "${{ inputs.upstream_config_url }}" ]; then
-              echo "❌ upstream_config_url is required for 'add' action"
-              echo "   Example: https://raw.githubusercontent.com/kubernetes/test-infra/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/${VERSION}.yaml"
-              exit 1
-            fi
+          # Default upstream config URL if not provided
+          UPSTREAM_URL="${{ inputs.upstream_config_url }}"
+          if [ "$ACTION" = "add" ] && [ -z "$UPSTREAM_URL" ]; then
+            UPSTREAM_URL="https://raw.githubusercontent.com/kubernetes/test-infra/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/${VERSION}.yaml"
+            echo "ℹ️  No upstream URL provided, using default: $UPSTREAM_URL"
           fi
 
           echo "ACTION=$ACTION" >> "$GITHUB_ENV"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "CONFIG_FILE=$CONFIG_FILE" >> "$GITHUB_ENV"
+          echo "UPSTREAM_URL=$UPSTREAM_URL" >> "$GITHUB_ENV"
 
       - name: Check out repo
         uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
 
           # Use the existing script
           chmod +x hack/addProwConfigForRelease.sh
-          ./hack/addProwConfigForRelease.sh "${VERSION}" "${{ inputs.upstream_config_url }}"
+          ./hack/addProwConfigForRelease.sh "${VERSION}" "${UPSTREAM_URL}"
 
           CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
 
@@ -254,7 +254,7 @@ jobs:
 
             **Action:** `${{ inputs.action }}`
             **Version:** `${{ inputs.version }}`
-            ${{ inputs.action == 'add' && format('**Upstream config:** {0}', inputs.upstream_config_url) || '' }}
+            ${{ inputs.action == 'add' && format('**Upstream config:** `{0}`', env.UPSTREAM_URL) || '' }}
 
             ### Changes
             ${{ inputs.action == 'add' && format('- Generated `config/prow/release-branch-jobs/{0}.yaml` from upstream config\n- Added envsubst line to `deploy-lts-prow.yaml`', inputs.version) || format('- Removed `config/prow/release-branch-jobs/{0}.yaml`\n- Removed envsubst line from `deploy-lts-prow.yaml`', inputs.version) }}
