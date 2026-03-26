@@ -234,8 +234,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Check if there are changes to commit
-          if git diff --quiet && git diff --cached --quiet; then
+          # Check if there are changes to commit (tracked, staged, or untracked)
+          if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
             echo "⚠️  No changes detected. Nothing to commit."
             exit 0
           fi
