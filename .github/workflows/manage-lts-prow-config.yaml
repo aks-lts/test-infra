@@ -30,6 +30,11 @@ permissions:
   contents: write
   pull-requests: write
 
+# NOTE: deploy-lts-prow.yaml dynamically discovers all config files in
+# config/prow/release-branch-jobs/ (excluding base.yaml) via glob.
+# Adding/removing a version only requires adding/deleting the YAML file —
+# no workflow file modifications needed.
+
 jobs:
   manage-prow-config:
     runs-on: ubuntu-latest
@@ -65,7 +70,6 @@ jobs:
       - name: Check current state
         run: |
           CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
-          WORKFLOW_FILE=".github/workflows/deploy-lts-prow.yaml"
 
           if [ "$ACTION" = "add" ]; then
             if [ -f "$CONFIG_FILE" ]; then
@@ -81,10 +85,6 @@ jobs:
           echo "Current LTS configs:"
           ls -1 config/prow/release-branch-jobs/*.yaml | grep -v base.yaml || echo "(none)"
 
-          echo ""
-          echo "Current workflow envsubst lines:"
-          grep "envsubst < config/prow/release-branch-jobs/" "$WORKFLOW_FILE" || echo "(none)"
-
       - name: Add new LTS version config
         if: inputs.action == 'add'
         run: |
@@ -99,14 +99,6 @@ jobs:
           # Verify config file was generated
           if [ ! -f "$CONFIG_FILE" ]; then
             echo "❌ Config file was not generated: $CONFIG_FILE"
-            exit 1
-          fi
-
-          # Verify workflow file was updated
-          if grep -q "config/prow/release-branch-jobs/${VERSION}.yaml" .github/workflows/deploy-lts-prow.yaml; then
-            echo "✅ deploy-lts-prow.yaml updated"
-          else
-            echo "❌ deploy-lts-prow.yaml was NOT updated"
             exit 1
           fi
 
@@ -217,27 +209,14 @@ jobs:
           echo "🗑️  Removing Prow config for deprecated LTS version ${VERSION}..."
 
           CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
-          WORKFLOW_FILE=".github/workflows/deploy-lts-prow.yaml"
 
           # Remove the config file
           rm -f "$CONFIG_FILE"
           echo "✅ Removed $CONFIG_FILE"
 
-          # Remove the envsubst line from deploy-lts-prow.yaml
-          if grep -q "config/prow/release-branch-jobs/${VERSION}.yaml" "$WORKFLOW_FILE"; then
-            sed -i "/config\/prow\/release-branch-jobs\/${VERSION}\.yaml/d" "$WORKFLOW_FILE"
-            echo "✅ Removed envsubst line for ${VERSION} from $WORKFLOW_FILE"
-          else
-            echo "⚠️  No envsubst line found for ${VERSION} in $WORKFLOW_FILE (already removed?)"
-          fi
-
           echo ""
           echo "Remaining LTS configs:"
           ls -1 config/prow/release-branch-jobs/*.yaml | grep -v base.yaml || echo "(none)"
-
-          echo ""
-          echo "Remaining workflow envsubst lines:"
-          grep "envsubst < config/prow/release-branch-jobs/" "$WORKFLOW_FILE" || echo "(none)"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
@@ -257,7 +236,7 @@ jobs:
             ${{ inputs.action == 'add' && format('**Upstream config:** `{0}`', env.UPSTREAM_URL) || '' }}
 
             ### Changes
-            ${{ inputs.action == 'add' && format('- Generated `config/prow/release-branch-jobs/{0}.yaml` from upstream config\n- Added envsubst line to `deploy-lts-prow.yaml`', inputs.version) || format('- Removed `config/prow/release-branch-jobs/{0}.yaml`\n- Removed envsubst line from `deploy-lts-prow.yaml`', inputs.version) }}
+            ${{ inputs.action == 'add' && format('- Generated `config/prow/release-branch-jobs/{0}.yaml` from upstream config', inputs.version) || format('- Removed `config/prow/release-branch-jobs/{0}.yaml`', inputs.version) }}
 
             ${{ inputs.action == 'add' && format('### Job Comparison (vs {0})\n{1}', steps.job-diff.outputs.prev_version, steps.job-diff.outputs.job_diff_summary) || '' }}
 

@@ -33,6 +33,8 @@ fi
 # Check if the line already exists
 if grep -q "config/prow/release-branch-jobs/${VERSION}.yaml" "$WORKFLOW_FILE"; then
     echo "✅ Job config step for version ${VERSION} already exists in $WORKFLOW_FILE"
+elif grep -q 'config/prow/release-branch-jobs/\*\.yaml' "$WORKFLOW_FILE" || grep -q 'release-branch-jobs/\*.yaml' "$WORKFLOW_FILE"; then
+    echo "✅ Workflow uses dynamic glob discovery — no per-version line needed in $WORKFLOW_FILE"
 else 
     # Find the line number of the last envsubst command in the 'Create job configs' section
     LAST_ENVSUBST_LINE=$(grep -n "envsubst < config/prow/release-branch-jobs/.*\.yaml >> cm.yaml" "$WORKFLOW_FILE" | tail -1 | cut -d: -f1)
