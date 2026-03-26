@@ -1,0 +1,275 @@
+name: Manage LTS Prow Job Configs
+# Automates adding new and removing deprecated LTS Prow job configurations.
+#
+# ADD: Uses the existing hack/addProwConfigForRelease.sh to generate config,
+#      compares job names against the previous LTS version to detect drift,
+#      then opens a PR for review.
+# REMOVE: Deletes the config file and removes the envsubst line from
+#         deploy-lts-prow.yaml, then opens a PR for review.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - add
+          - remove
+      version:
+        description: 'Kubernetes version (e.g. 1.32)'
+        required: true
+        type: string
+      upstream_config_url:
+        description: 'URL to raw upstream config (required for add, ignored for remove)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  manage-prow-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate inputs
+        run: |
+          VERSION="${{ inputs.version }}"
+          ACTION="${{ inputs.action }}"
+
+          # Validate version format (e.g. 1.32)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+$'; then
+            echo "❌ Invalid version format: $VERSION (expected e.g. 1.32)"
+            exit 1
+          fi
+
+          CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
+
+          if [ "$ACTION" = "add" ]; then
+            if [ -z "${{ inputs.upstream_config_url }}" ]; then
+              echo "❌ upstream_config_url is required for 'add' action"
+              echo "   Example: https://raw.githubusercontent.com/kubernetes/test-infra/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/${VERSION}.yaml"
+              exit 1
+            fi
+          fi
+
+          echo "ACTION=$ACTION" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "CONFIG_FILE=$CONFIG_FILE" >> "$GITHUB_ENV"
+
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Check current state
+        run: |
+          CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
+          WORKFLOW_FILE=".github/workflows/deploy-lts-prow.yaml"
+
+          if [ "$ACTION" = "add" ]; then
+            if [ -f "$CONFIG_FILE" ]; then
+              echo "⚠️  Config file $CONFIG_FILE already exists. Will regenerate."
+            fi
+          elif [ "$ACTION" = "remove" ]; then
+            if [ ! -f "$CONFIG_FILE" ]; then
+              echo "❌ Config file $CONFIG_FILE does not exist. Nothing to remove."
+              exit 1
+            fi
+          fi
+
+          echo "Current LTS configs:"
+          ls -1 config/prow/release-branch-jobs/*.yaml | grep -v base.yaml || echo "(none)"
+
+          echo ""
+          echo "Current workflow envsubst lines:"
+          grep "envsubst < config/prow/release-branch-jobs/" "$WORKFLOW_FILE" || echo "(none)"
+
+      - name: Add new LTS version config
+        if: inputs.action == 'add'
+        run: |
+          echo "🚀 Adding Prow config for LTS version ${VERSION}..."
+
+          # Use the existing script
+          chmod +x hack/addProwConfigForRelease.sh
+          ./hack/addProwConfigForRelease.sh "${VERSION}" "${{ inputs.upstream_config_url }}"
+
+          CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
+
+          # Verify config file was generated
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "❌ Config file was not generated: $CONFIG_FILE"
+            exit 1
+          fi
+
+          # Verify workflow file was updated
+          if grep -q "config/prow/release-branch-jobs/${VERSION}.yaml" .github/workflows/deploy-lts-prow.yaml; then
+            echo "✅ deploy-lts-prow.yaml updated"
+          else
+            echo "❌ deploy-lts-prow.yaml was NOT updated"
+            exit 1
+          fi
+
+          echo "✅ Successfully generated Prow config for ${VERSION}"
+
+      - name: Compare jobs against previous version
+        if: inputs.action == 'add'
+        id: job-diff
+        run: |
+          set -euo pipefail
+
+          CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
+
+          # Extract job names from the newly generated config
+          NEW_JOBS=$(grep -E '^\s*name:\s' "$CONFIG_FILE" | sed 's/.*name:\s*//' | sort)
+          NEW_COUNT=$(echo "$NEW_JOBS" | wc -l)
+          echo "📊 New config (${VERSION}) has ${NEW_COUNT} jobs:"
+          echo "$NEW_JOBS"
+          echo ""
+
+          # Find the previous LTS version config to compare against.
+          # List all versioned configs, exclude the new one, pick the highest version.
+          PREV_CONFIG=""
+          PREV_VERSION=""
+          for f in $(ls config/prow/release-branch-jobs/*.yaml | grep -v base.yaml | sort -V); do
+            v=$(basename "$f" .yaml)
+            if [ "$v" != "${VERSION}" ]; then
+              PREV_CONFIG="$f"
+              PREV_VERSION="$v"
+            fi
+          done
+
+          if [ -z "$PREV_CONFIG" ]; then
+            echo "⚠️  No previous LTS version config found — cannot compare jobs."
+            echo "   Skipping diff (first LTS config)."
+            echo "job_diff_summary=No previous version to compare against." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Comparing against previous version: ${PREV_VERSION} (${PREV_CONFIG})"
+          PREV_JOBS=$(grep -E '^\s*name:\s' "$PREV_CONFIG" | sed 's/.*name:\s*//' | sort)
+          PREV_COUNT=$(echo "$PREV_JOBS" | wc -l)
+          echo "Previous config (${PREV_VERSION}) has ${PREV_COUNT} jobs:"
+          echo "$PREV_JOBS"
+          echo ""
+
+          # Find jobs only in previous (dropped)
+          DROPPED=$(comm -23 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS"))
+          # Find jobs only in new (added)
+          ADDED=$(comm -13 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS"))
+          # Find jobs in both (common)
+          COMMON=$(comm -12 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS"))
+
+          SUMMARY=""
+          HAS_DIFF=false
+
+          if [ -n "$DROPPED" ]; then
+            HAS_DIFF=true
+            DROP_COUNT=$(echo "$DROPPED" | wc -l)
+            echo "🔴 ${DROP_COUNT} job(s) in ${PREV_VERSION} but MISSING in ${VERSION}:"
+            echo "$DROPPED" | while read -r j; do echo "   - $j"; done
+            SUMMARY+="🔴 **Dropped from ${PREV_VERSION}:**\n"
+            while IFS= read -r j; do
+              SUMMARY+="- \`$j\`\n"
+            done <<< "$DROPPED"
+            SUMMARY+="\n"
+          fi
+
+          if [ -n "$ADDED" ]; then
+            HAS_DIFF=true
+            ADD_COUNT=$(echo "$ADDED" | wc -l)
+            echo "🟢 ${ADD_COUNT} job(s) NEW in ${VERSION} (not in ${PREV_VERSION}):"
+            echo "$ADDED" | while read -r j; do echo "   + $j"; done
+            SUMMARY+="🟢 **New in ${VERSION}:**\n"
+            while IFS= read -r j; do
+              SUMMARY+="- \`$j\`\n"
+            done <<< "$ADDED"
+            SUMMARY+="\n"
+          fi
+
+          COMMON_COUNT=$(echo "$COMMON" | wc -l)
+
+          if [ "$HAS_DIFF" = false ]; then
+            echo "✅ Job sets are identical between ${PREV_VERSION} and ${VERSION} (${COMMON_COUNT} jobs)"
+            SUMMARY="✅ Job sets are identical between ${PREV_VERSION} and ${VERSION} (${COMMON_COUNT} jobs)."
+          else
+            echo ""
+            echo "ℹ️  ${COMMON_COUNT} jobs are common between both versions."
+            SUMMARY+="ℹ️ ${COMMON_COUNT} job(s) common between both versions."
+          fi
+
+          # Write multiline summary to output
+          {
+            echo "job_diff_summary<<DIFF_EOF"
+            echo -e "$SUMMARY"
+            echo "DIFF_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "prev_version=$PREV_VERSION"
+            echo "new_count=$NEW_COUNT"
+            echo "prev_count=$PREV_COUNT"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Remove deprecated LTS version config
+        if: inputs.action == 'remove'
+        run: |
+          echo "🗑️  Removing Prow config for deprecated LTS version ${VERSION}..."
+
+          CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
+          WORKFLOW_FILE=".github/workflows/deploy-lts-prow.yaml"
+
+          # Remove the config file
+          rm -f "$CONFIG_FILE"
+          echo "✅ Removed $CONFIG_FILE"
+
+          # Remove the envsubst line from deploy-lts-prow.yaml
+          if grep -q "config/prow/release-branch-jobs/${VERSION}.yaml" "$WORKFLOW_FILE"; then
+            sed -i "/config\/prow\/release-branch-jobs\/${VERSION}\.yaml/d" "$WORKFLOW_FILE"
+            echo "✅ Removed envsubst line for ${VERSION} from $WORKFLOW_FILE"
+          else
+            echo "⚠️  No envsubst line found for ${VERSION} in $WORKFLOW_FILE (already removed?)"
+          fi
+
+          echo ""
+          echo "Remaining LTS configs:"
+          ls -1 config/prow/release-branch-jobs/*.yaml | grep -v base.yaml || echo "(none)"
+
+          echo ""
+          echo "Remaining workflow envsubst lines:"
+          grep "envsubst < config/prow/release-branch-jobs/" "$WORKFLOW_FILE" || echo "(none)"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            ${{ inputs.action == 'add' && format('Add Prow job config for LTS {0}', inputs.version) || format('Remove Prow job config for deprecated LTS {0}', inputs.version) }}
+          branch: automation/prow-config-${{ inputs.action }}-${{ inputs.version }}
+          delete-branch: true
+          title: |
+            ${{ inputs.action == 'add' && format('[Automation] Add Prow job config for LTS {0}', inputs.version) || format('[Automation] Remove Prow job config for deprecated LTS {0}', inputs.version) }}
+          body: |
+            ## Prow Job Config ${{ inputs.action == 'add' && 'Addition' || 'Removal' }} — LTS ${{ inputs.version }}
+
+            **Action:** `${{ inputs.action }}`
+            **Version:** `${{ inputs.version }}`
+            ${{ inputs.action == 'add' && format('**Upstream config:** {0}', inputs.upstream_config_url) || '' }}
+
+            ### Changes
+            ${{ inputs.action == 'add' && format('- Generated `config/prow/release-branch-jobs/{0}.yaml` from upstream config\n- Added envsubst line to `deploy-lts-prow.yaml`', inputs.version) || format('- Removed `config/prow/release-branch-jobs/{0}.yaml`\n- Removed envsubst line from `deploy-lts-prow.yaml`', inputs.version) }}
+
+            ${{ inputs.action == 'add' && format('### Job Comparison (vs {0})\n{1}', steps.job-diff.outputs.prev_version, steps.job-diff.outputs.job_diff_summary) || '' }}
+
+            ### Checklist
+            - [ ] Review the generated/modified files
+            ${{ inputs.action == 'add' && format('- [ ] Review any job differences flagged above (dropped/new jobs vs {0})', steps.job-diff.outputs.prev_version) || '' }}
+            - [ ] ${{ inputs.action == 'add' && format('Run [Deploy AKS LTS Prow](../actions/workflows/deploy-lts-prow.yaml) workflow for this branch') || 'Confirm version is truly deprecated/EOL' }}
+            - [ ] ${{ inputs.action == 'add' && format('Create test PR on [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) targeting `release-{0}-lts` branch', inputs.version) || 'No remaining LTS branches depend on this config' }}
+            - [ ] Merge this PR
+
+            ---
+            *Generated by the [Manage LTS Prow Job Configs](${{ github.server_url }}/${{ github.repository }}/actions/workflows/manage-lts-prow-config.yaml) workflow.*
+          labels: |
+            automation
+            prow-config
