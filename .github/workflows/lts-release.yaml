@@ -37,17 +37,11 @@ on:
         default: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 env:
   GITHUB_ORG: aks-lts
   KUBE_REPO: kubernetes
-  # LTS_RELEASE_TOKEN must be a PAT or GitHub App token with write access to
-  # aks-lts/kubernetes (push branches, tags, create PRs).
-  # Falls back to the default GITHUB_TOKEN (which only works for same-repo ops).
-  GITHUB_TOKEN: ${{ secrets.LTS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
-  GH_TOKEN: ${{ secrets.LTS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -131,15 +125,26 @@ jobs:
       CVE_PRS: ${{ inputs.cve_prs }}
       DRY_RUN: ${{ inputs.dry_run }}
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.LTS_RELEASE_APP_ID }}
+          private-key: ${{ secrets.LTS_RELEASE_APP_PRIVATE_KEY }}
+          owner: aks-lts
+          repositories: kubernetes
+
       - name: Check out test-infra (for hack scripts)
         uses: actions/checkout@v4
         with:
           path: test-infra
 
       - name: Clone aks-lts/kubernetes
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git clone --no-single-branch \
-            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${KUBE_REPO}.git" \
+            "https://x-access-token:${APP_TOKEN}@github.com/${GITHUB_ORG}/${KUBE_REPO}.git" \
             kubernetes
           cd kubernetes
           git fetch --all --tags
@@ -276,6 +281,8 @@ jobs:
       - name: Generate changelog
         id: changelog
         working-directory: kubernetes
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
 
@@ -389,6 +396,9 @@ jobs:
 
       - name: Update CHANGELOG file and create PR
         working-directory: kubernetes
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
 
