@@ -1,0 +1,514 @@
+name: AKS LTS Kubernetes Release
+# Automates the end-to-end release process for AKS LTS Kubernetes releases:
+#   1. Ensures the LTS branch exists (creates from upstream release branch if needed)
+#   2. Determines the next LTS patch version (starting at .100)
+#   3. Creates an annotated tag (v<MAJOR>.<MINOR>.<PATCH>-akslts)
+#   4. Generates a changelog (PR list, source archives, CVE sections)
+#   5. Opens a PR against the LTS branch with the changelog update
+#
+# The available versions are dynamically populated from the Prow release-branch-jobs
+# configs in this repo (config/prow/release-branch-jobs/*.yaml, excluding base.yaml).
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: >
+          Comma-separated Kubernetes minor versions to release (e.g. "1.31,1.30,1.29").
+          Available versions match configs in config/prow/release-branch-jobs/.
+        required: true
+        type: string
+      cve_ids:
+        description: >
+          Optional comma-separated CVE IDs (e.g. "CVE-2025-1234,CVE-2025-5678").
+          Applied to all versions in this release batch.
+        required: false
+        type: string
+      cve_prs:
+        description: >
+          Optional comma-separated upstream k/k PR numbers matching CVE IDs order
+          (e.g. "133470,134521").
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run — skip tag push and PR creation'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  GITHUB_ORG: aks-lts
+  KUBE_REPO: kubernetes
+  # LTS_RELEASE_TOKEN must be a PAT or GitHub App token with write access to
+  # aks-lts/kubernetes (push branches, tags, create PRs).
+  # Falls back to the default GITHUB_TOKEN (which only works for same-repo ops).
+  GITHUB_TOKEN: ${{ secrets.LTS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+  GH_TOKEN: ${{ secrets.LTS_RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Validate inputs and build the release matrix
+  # ---------------------------------------------------------------------------
+  validate-and-plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Check out test-infra
+        uses: actions/checkout@v4
+
+      - name: Validate versions and build matrix
+        id: plan
+        run: |
+          set -euo pipefail
+
+          IFS=',' read -ra VERSIONS <<< "${{ inputs.versions }}"
+
+          # Discover available versions from Prow configs
+          AVAILABLE=()
+          for f in config/prow/release-branch-jobs/*.yaml; do
+            base=$(basename "$f" .yaml)
+            [[ "$base" == "base" ]] && continue
+            AVAILABLE+=("$base")
+          done
+          echo "Available LTS versions: ${AVAILABLE[*]}"
+
+          # Validate each requested version
+          VALID_VERSIONS=()
+          for v in "${VERSIONS[@]}"; do
+            v=$(echo "$v" | xargs)  # trim whitespace
+            [[ -z "$v" ]] && continue
+            if ! echo "$v" | grep -qE '^[0-9]+\.[0-9]+$'; then
+              echo "❌ Invalid version format: '$v' (expected e.g. 1.31)"
+              exit 1
+            fi
+            # Check version is in available list (warn but don't block — new versions are valid)
+            found=false
+            for a in "${AVAILABLE[@]}"; do
+              [[ "$a" == "$v" ]] && found=true
+            done
+            if ! $found; then
+              echo "⚠️  Version $v has no Prow config yet — proceeding anyway."
+            fi
+            VALID_VERSIONS+=("$v")
+          done
+
+          if [[ ${#VALID_VERSIONS[@]} -eq 0 ]]; then
+            echo "❌ No valid versions provided."
+            exit 1
+          fi
+
+          echo "Versions to release: ${VALID_VERSIONS[*]}"
+
+          # Build JSON matrix
+          MATRIX_JSON="["
+          first=true
+          for v in "${VALID_VERSIONS[@]}"; do
+            if $first; then first=false; else MATRIX_JSON+=","; fi
+            MATRIX_JSON+="{\"version\":\"$v\"}"
+          done
+          MATRIX_JSON+="]"
+
+          echo "matrix={\"include\":$MATRIX_JSON}" >> "$GITHUB_OUTPUT"
+          echo "Generated matrix: $MATRIX_JSON"
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Release each version (runs in parallel per version)
+  # ---------------------------------------------------------------------------
+  release:
+    needs: validate-and-plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.validate-and-plan.outputs.matrix) }}
+    env:
+      VERSION: ${{ matrix.version }}
+      CVE_IDS: ${{ inputs.cve_ids }}
+      CVE_PRS: ${{ inputs.cve_prs }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Check out test-infra (for hack scripts)
+        uses: actions/checkout@v4
+        with:
+          path: test-infra
+
+      - name: Clone aks-lts/kubernetes
+        run: |
+          git clone --no-single-branch \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_ORG}/${KUBE_REPO}.git" \
+            kubernetes
+          cd kubernetes
+          git fetch --all --tags
+
+      - name: Ensure LTS branch exists
+        id: branch
+        working-directory: kubernetes
+        run: |
+          set -euo pipefail
+          LTS_BRANCH="release-${VERSION}-lts"
+          UPSTREAM_BRANCH="release-${VERSION}"
+
+          echo "lts_branch=$LTS_BRANCH" >> "$GITHUB_OUTPUT"
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${LTS_BRANCH}"; then
+            echo "✅ LTS branch '$LTS_BRANCH' already exists."
+            git checkout "$LTS_BRANCH"
+            git pull --ff-only
+          else
+            echo "🆕 LTS branch '$LTS_BRANCH' does not exist. Creating from '$UPSTREAM_BRANCH'..."
+            if ! git show-ref --verify --quiet "refs/remotes/origin/${UPSTREAM_BRANCH}"; then
+              echo "❌ Upstream branch '$UPSTREAM_BRANCH' not found."
+              exit 1
+            fi
+            git checkout -b "$LTS_BRANCH" "origin/${UPSTREAM_BRANCH}"
+            if [[ "$DRY_RUN" != "true" ]]; then
+              git push origin "$LTS_BRANCH"
+              echo "✅ Pushed new LTS branch '$LTS_BRANCH'."
+            else
+              echo "🔍 [DRY RUN] Would push new LTS branch '$LTS_BRANCH'."
+            fi
+          fi
+
+      - name: Determine next LTS version
+        id: next-version
+        working-directory: kubernetes
+        run: |
+          set -euo pipefail
+
+          # Find all existing akslts tags for this minor version
+          EXISTING_TAGS=$(git tag -l "v${VERSION}.*-akslts" | sort -V)
+          echo "Existing akslts tags for ${VERSION}:"
+          echo "$EXISTING_TAGS"
+
+          if [[ -z "$EXISTING_TAGS" ]]; then
+            NEXT_PATCH=100
+            echo "No existing LTS tags — starting at patch 100."
+          else
+            # Get the highest patch number
+            LATEST_TAG=$(echo "$EXISTING_TAGS" | tail -1)
+            # Extract patch: v1.31.100-akslts -> 100
+            LATEST_PATCH=$(echo "$LATEST_TAG" | sed -E 's/^v[0-9]+\.[0-9]+\.([0-9]+)-akslts$/\1/')
+            NEXT_PATCH=$((LATEST_PATCH + 1))
+            echo "Latest tag: $LATEST_TAG (patch $LATEST_PATCH)"
+          fi
+
+          NEW_VERSION="${VERSION}.${NEXT_PATCH}"
+          NEW_TAG="v${NEW_VERSION}-akslts"
+
+          echo "next_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "next_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          echo "next_patch=$NEXT_PATCH" >> "$GITHUB_OUTPUT"
+
+          echo "🏷️  Next LTS version: $NEW_VERSION"
+          echo "🏷️  Next tag: $NEW_TAG"
+
+      - name: Determine previous version (for changelog diff)
+        id: prev-version
+        working-directory: kubernetes
+        run: |
+          set -euo pipefail
+
+          NEW_TAG="${{ steps.next-version.outputs.next_tag }}"
+          EXISTING_TAGS=$(git tag -l "v${VERSION}.*-akslts" | sort -V)
+
+          if [[ -n "$EXISTING_TAGS" ]]; then
+            PREV_TAG=$(echo "$EXISTING_TAGS" | tail -1)
+            PREV_VERSION=$(echo "$PREV_TAG" | sed 's/^v//')
+            echo "prev_tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+            echo "prev_version=$PREV_VERSION" >> "$GITHUB_OUTPUT"
+            echo "📋 Previous LTS tag: $PREV_TAG"
+          else
+            # First LTS release — find the latest upstream release tag for this minor
+            # e.g., for 1.31 the base would be the latest v1.31.X tag (without -akslts)
+            UPSTREAM_TAGS=$(git tag -l "v${VERSION}.*" | grep -v 'akslts' | grep -v 'alpha\|beta\|rc' | sort -V)
+            if [[ -n "$UPSTREAM_TAGS" ]]; then
+              PREV_TAG=$(echo "$UPSTREAM_TAGS" | tail -1)
+              PREV_VERSION=$(echo "$PREV_TAG" | sed 's/^v//')
+              echo "prev_tag=$PREV_TAG" >> "$GITHUB_OUTPUT"
+              echo "prev_version=$PREV_VERSION" >> "$GITHUB_OUTPUT"
+              echo "📋 First LTS release — using upstream tag as base: $PREV_TAG"
+            else
+              echo "⚠️  No previous tags found for ${VERSION}. Changelog will be empty."
+              echo "prev_tag=" >> "$GITHUB_OUTPUT"
+              echo "prev_version=" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Create annotated tag
+        id: tag
+        working-directory: kubernetes
+        run: |
+          set -euo pipefail
+          LTS_BRANCH="${{ steps.branch.outputs.lts_branch }}"
+          NEW_VERSION="${{ steps.next-version.outputs.next_version }}"
+          NEW_TAG="${{ steps.next-version.outputs.next_tag }}"
+
+          git checkout "$LTS_BRANCH"
+
+          # Configure git for tagging
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Creating annotated tag: $NEW_TAG on branch $LTS_BRANCH"
+          git tag -a "$NEW_TAG" -m "AKS LTS release v${NEW_VERSION}"
+
+          # Verify tag
+          echo "Verifying tag..."
+          git tag -l "$NEW_TAG" -n9
+          TAG_VERIFY=$(git tag -l "$NEW_TAG" -n9)
+          if [[ -z "$TAG_VERIFY" ]]; then
+            echo "❌ Tag creation failed!"
+            exit 1
+          fi
+          echo "✅ Tag verified: $TAG_VERIFY"
+
+          if [[ "$DRY_RUN" != "true" ]]; then
+            git push origin "$NEW_TAG"
+            echo "✅ Pushed tag $NEW_TAG"
+          else
+            echo "🔍 [DRY RUN] Would push tag $NEW_TAG"
+          fi
+
+      - name: Generate changelog
+        id: changelog
+        working-directory: kubernetes
+        run: |
+          set -euo pipefail
+
+          NEW_VERSION="${{ steps.next-version.outputs.next_version }}"
+          NEW_TAG="${{ steps.next-version.outputs.next_tag }}"
+          PREV_TAG="${{ steps.prev-version.outputs.prev_tag }}"
+          PREV_VERSION="${{ steps.prev-version.outputs.prev_version }}"
+          MINOR="${VERSION}"
+
+          SCRIPT_DIR="${GITHUB_WORKSPACE}/test-infra/hack"
+          TMP_DIR=$(mktemp -d)
+
+          # Source helper scripts
+          source "${SCRIPT_DIR}/tag_utils.sh"
+          source "${SCRIPT_DIR}/cve_utils.sh"
+          source "${SCRIPT_DIR}/pr_utils.sh"
+          source "${SCRIPT_DIR}/toc_utils.sh"
+
+          # ── Source Archives ──
+          TAR_URL="https://github.com/${GITHUB_ORG}/${KUBE_REPO}/archive/refs/tags/${NEW_TAG}.tar.gz"
+          ZIP_URL="https://github.com/${GITHUB_ORG}/${KUBE_REPO}/archive/refs/tags/${NEW_TAG}.zip"
+
+          echo "Downloading source archives..."
+          TAR_FILE="$TMP_DIR/kubernetes-${NEW_VERSION}.tar.gz"
+          ZIP_FILE="$TMP_DIR/kubernetes-${NEW_VERSION}.zip"
+
+          # Archives may not be available immediately after tag push; retry
+          for attempt in 1 2 3; do
+            if curl -fLSs -o "$TAR_FILE" "$TAR_URL" && curl -fLSs -o "$ZIP_FILE" "$ZIP_URL"; then
+              break
+            fi
+            echo "Archive download attempt $attempt failed, retrying in 10s..."
+            sleep 10
+          done
+
+          if [[ -f "$TAR_FILE" && -f "$ZIP_FILE" ]]; then
+            TAR_SHA512=$(sha512sum "$TAR_FILE" | awk '{print $1}')
+            ZIP_SHA512=$(sha512sum "$ZIP_FILE" | awk '{print $1}')
+            SOURCE_TABLE="filename | sha512 hash
+          -------- | -----------
+          [kubernetes.tar.gz](${TAR_URL}) | ${TAR_SHA512}
+          [kubernetes.zip](${ZIP_URL}) | ${ZIP_SHA512}"
+          else
+            echo "⚠️  Could not download source archives — using placeholder."
+            SOURCE_TABLE="filename | sha512 hash
+          -------- | -----------
+          [kubernetes.tar.gz](${TAR_URL}) | _(pending)_
+          [kubernetes.zip](${ZIP_URL}) | _(pending)_"
+          fi
+
+          # ── CVE Sections ──
+          CVE_SECTIONS=""
+          if [[ -n "${CVE_IDS}" ]]; then
+            IFS=',' read -ra CVE_LIST <<< "${CVE_IDS}"
+            IFS=',' read -ra CVE_PR_LIST <<< "${CVE_PRS:-}"
+
+            declare -A CVE_PR_MAP
+            for i in "${!CVE_LIST[@]}"; do
+              cve_id="${CVE_LIST[$i]}"
+              pr_num="${CVE_PR_LIST[$i]:-}"
+              CVE_PR_MAP["$cve_id"]="$pr_num"
+            done
+
+            CVE_SECTIONS=$(get_cve_sections "$MINOR" "$TMP_DIR" CVE_PR_MAP) || true
+          fi
+
+          if [[ -z "$CVE_SECTIONS" ]]; then
+            CVE_SECTIONS="No CVEs addressed in this release."
+          fi
+
+          # ── PR List ──
+          PR_LIST=""
+          if [[ -n "$PREV_TAG" ]]; then
+            PR_LIST=$(generate_pr_list_md "$(pwd)" "${NEW_TAG}" "${PREV_TAG}") || true
+          fi
+          [[ -z "$PR_LIST" ]] && PR_LIST="- No additional changes in this release."
+
+          # ── Assemble changelog snippet ──
+          CHANGELOG_SNIPPET="# v${NEW_VERSION}
+
+          ## Downloads for v${NEW_VERSION}
+          ### Source Code
+          ${SOURCE_TABLE}
+
+          ## Changelog since v${PREV_VERSION:-unknown}
+
+          ## Important Security Information
+
+          This release contains changes that address the following vulnerabilities:
+
+          ${CVE_SECTIONS}
+
+          ## Changes by Kind
+          ### Bug or Regression
+
+          ${PR_LIST}
+          "
+
+          # Remove leading whitespace from heredoc-style indentation
+          CHANGELOG_SNIPPET=$(echo "$CHANGELOG_SNIPPET" | sed 's/^          //')
+
+          # Save for the next step
+          echo "$CHANGELOG_SNIPPET" > "$TMP_DIR/changelog-snippet.md"
+          echo "changelog_snippet_path=$TMP_DIR/changelog-snippet.md" >> "$GITHUB_OUTPUT"
+          echo "tmp_dir=$TMP_DIR" >> "$GITHUB_OUTPUT"
+
+          echo ""
+          echo "═══ Generated Changelog Snippet ═══"
+          cat "$TMP_DIR/changelog-snippet.md"
+          echo "═══════════════════════════════════"
+
+      - name: Update CHANGELOG file and create PR
+        working-directory: kubernetes
+        run: |
+          set -euo pipefail
+
+          NEW_VERSION="${{ steps.next-version.outputs.next_version }}"
+          LTS_BRANCH="${{ steps.branch.outputs.lts_branch }}"
+          SNIPPET_PATH="${{ steps.changelog.outputs.changelog_snippet_path }}"
+          TMP_DIR="${{ steps.changelog.outputs.tmp_dir }}"
+          MINOR="${VERSION}"
+          TS=$(date +%Y%m%d%H%M)
+
+          SCRIPT_DIR="${GITHUB_WORKSPACE}/test-infra/hack"
+          source "${SCRIPT_DIR}/toc_utils.sh"
+
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create changelog branch
+          git checkout "$LTS_BRANCH"
+          CHANGELOG_BRANCH="release-${NEW_VERSION}-akslts-lts-changelog-${TS}"
+          git checkout -b "$CHANGELOG_BRANCH"
+
+          # Insert changelog into CHANGELOG file
+          CHANGELOG_FILE="CHANGELOG/CHANGELOG-${MINOR}.md"
+          TOC_END_MARKER='<!-- END MUNGE: GENERATED_TOC -->'
+
+          SNIPPET=$(cat "$SNIPPET_PATH")
+
+          if [[ -f "$CHANGELOG_FILE" ]]; then
+            if grep -q "$TOC_END_MARKER" "$CHANGELOG_FILE"; then
+              TMP_OUT="$TMP_DIR/CHANGELOG-${MINOR}.md.inserting"
+              awk -v insert="$SNIPPET" -v marker="$TOC_END_MARKER" '
+                BEGIN{done=0}
+                index($0, marker)>0 && !done {
+                  print $0; print ""; print insert; print ""; done=1; next
+                }
+                { print }
+                END { if(!done){ print ""; print insert } }
+              ' "$CHANGELOG_FILE" > "$TMP_OUT"
+              mv "$TMP_OUT" "$CHANGELOG_FILE"
+            else
+              printf '%s\n\n%s\n' "$(cat "$CHANGELOG_FILE")" "$SNIPPET" > "$CHANGELOG_FILE"
+            fi
+            echo "✅ Updated $CHANGELOG_FILE"
+          else
+            # Create new CHANGELOG file if it doesn't exist
+            mkdir -p CHANGELOG
+            cat > "$CHANGELOG_FILE" << CHEOF
+          <!-- BEGIN MUNGE: GENERATED_TOC -->
+          <!-- END MUNGE: GENERATED_TOC -->
+
+          ${SNIPPET}
+          CHEOF
+            # Remove leading whitespace from heredoc
+            sed -i 's/^          //' "$CHANGELOG_FILE"
+            echo "✅ Created new $CHANGELOG_FILE"
+          fi
+
+          # Update TOC
+          update_changelog_toc "$CHANGELOG_FILE" || echo "⚠️  TOC update skipped (mdtoc not available)"
+
+          # Commit
+          git add "$CHANGELOG_FILE"
+          git commit -m "CHANGELOG: Update directory for v${NEW_VERSION}-akslts release" || {
+            echo "⚠️  No changes to commit for ${MINOR}."
+            exit 0
+          }
+
+          if [[ "$DRY_RUN" != "true" ]]; then
+            git push origin "$CHANGELOG_BRANCH"
+            echo "✅ Pushed changelog branch: $CHANGELOG_BRANCH"
+
+            # Create PR via GitHub API
+            PR_TITLE="CHANGELOG: Update directory for v${NEW_VERSION}-akslts release"
+            PR_BODY="## AKS LTS Release v${NEW_VERSION}
+
+          This PR updates the changelog for the **v${NEW_VERSION}-akslts** release on the \`${LTS_BRANCH}\` branch.
+
+          ### Tag
+          - \`v${NEW_VERSION}-akslts\` → [view tag](https://github.com/${GITHUB_ORG}/${KUBE_REPO}/releases/tag/v${NEW_VERSION}-akslts)
+
+          ### Changes
+          $(cat "$SNIPPET_PATH" | head -50)
+
+          ---
+          _Automated by [AKS LTS Release workflow](https://github.com/${GITHUB_ORG}/test-infra/actions/workflows/lts-release.yaml)_"
+
+            # Remove heredoc indentation from PR body
+            PR_BODY=$(echo "$PR_BODY" | sed 's/^          //')
+
+            PR_URL=$(gh pr create \
+              --repo "${GITHUB_ORG}/${KUBE_REPO}" \
+              --base "$LTS_BRANCH" \
+              --head "$CHANGELOG_BRANCH" \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              2>&1) || true
+
+            if [[ "$PR_URL" == *"github.com"* ]]; then
+              echo "✅ Created PR: $PR_URL"
+            else
+              echo "⚠️  PR creation output: $PR_URL"
+              echo "   You may need to create the PR manually."
+            fi
+          else
+            echo "🔍 [DRY RUN] Would push branch '$CHANGELOG_BRANCH' and create PR."
+            echo ""
+            echo "Changelog diff:"
+            git diff --stat HEAD~1
+          fi
+
+      - name: Release summary
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════════════════════╗"
+          echo "║         AKS LTS Release Summary — ${VERSION}        "
+          echo "╠══════════════════════════════════════════════════════╣"
+          echo "║ Version:  v${{ steps.next-version.outputs.next_version }}"
+          echo "║ Tag:      ${{ steps.next-version.outputs.next_tag }}"
+          echo "║ Branch:   ${{ steps.branch.outputs.lts_branch }}"
+          echo "║ Previous: ${{ steps.prev-version.outputs.prev_tag }}"
+          echo "║ Dry Run:  ${DRY_RUN}"
+          echo "╚══════════════════════════════════════════════════════╝"
