@@ -30,6 +30,11 @@ permissions:
   contents: write
   pull-requests: write
 
+# NOTE: deploy-lts-prow.yaml dynamically discovers all config files in
+# config/prow/release-branch-jobs/ (excluding base.yaml) via glob.
+# Adding/removing a version only requires adding/deleting the YAML file —
+# no workflow file modifications needed.
+
 jobs:
   manage-prow-config:
     runs-on: ubuntu-latest
@@ -65,7 +70,6 @@ jobs:
       - name: Check current state
         run: |
           CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
-          WORKFLOW_FILE=".github/workflows/deploy-lts-prow.yaml"
 
           if [ "$ACTION" = "add" ]; then
             if [ -f "$CONFIG_FILE" ]; then
@@ -80,10 +84,6 @@ jobs:
 
           echo "Current LTS configs:"
           ls -1 config/prow/release-branch-jobs/*.yaml | grep -v base.yaml || echo "(none)"
-
-          echo ""
-          echo "Current workflow envsubst lines:"
-          grep "envsubst < config/prow/release-branch-jobs/" "$WORKFLOW_FILE" || echo "(none)"
 
       - name: Add new LTS version config
         if: inputs.action == 'add'
@@ -102,13 +102,10 @@ jobs:
             exit 1
           fi
 
-          # Verify workflow file was updated
-          if grep -q "config/prow/release-branch-jobs/${VERSION}.yaml" .github/workflows/deploy-lts-prow.yaml; then
-            echo "✅ deploy-lts-prow.yaml updated"
-          else
-            echo "❌ deploy-lts-prow.yaml was NOT updated"
-            exit 1
-          fi
+          # Safety net: revert any workflow file changes the script may have made.
+          # The org policy blocks GITHUB_TOKEN from pushing workflow file modifications.
+          # With dynamic glob discovery this should be a no-op, but just in case.
+          git checkout -- .github/workflows/ 2>/dev/null || true
 
           echo "✅ Successfully generated Prow config for ${VERSION}"
 
@@ -217,59 +214,117 @@ jobs:
           echo "🗑️  Removing Prow config for deprecated LTS version ${VERSION}..."
 
           CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
-          WORKFLOW_FILE=".github/workflows/deploy-lts-prow.yaml"
 
           # Remove the config file
           rm -f "$CONFIG_FILE"
           echo "✅ Removed $CONFIG_FILE"
 
-          # Remove the envsubst line from deploy-lts-prow.yaml
-          if grep -q "config/prow/release-branch-jobs/${VERSION}.yaml" "$WORKFLOW_FILE"; then
-            sed -i "/config\/prow\/release-branch-jobs\/${VERSION}\.yaml/d" "$WORKFLOW_FILE"
-            echo "✅ Removed envsubst line for ${VERSION} from $WORKFLOW_FILE"
-          else
-            echo "⚠️  No envsubst line found for ${VERSION} in $WORKFLOW_FILE (already removed?)"
-          fi
-
           echo ""
           echo "Remaining LTS configs:"
           ls -1 config/prow/release-branch-jobs/*.yaml | grep -v base.yaml || echo "(none)"
 
-          echo ""
-          echo "Remaining workflow envsubst lines:"
-          grep "envsubst < config/prow/release-branch-jobs/" "$WORKFLOW_FILE" || echo "(none)"
+      - name: Create branch, commit, and open PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: |
-            ${{ inputs.action == 'add' && format('Add Prow job config for LTS {0}', inputs.version) || format('Remove Prow job config for deprecated LTS {0}', inputs.version) }}
-          branch: automation/prow-config-${{ inputs.action }}-${{ inputs.version }}
-          delete-branch: true
-          title: |
-            ${{ inputs.action == 'add' && format('[Automation] Add Prow job config for LTS {0}', inputs.version) || format('[Automation] Remove Prow job config for deprecated LTS {0}', inputs.version) }}
-          body: |
-            ## Prow Job Config ${{ inputs.action == 'add' && 'Addition' || 'Removal' }} — LTS ${{ inputs.version }}
+          BRANCH="automation/prow-config-${{ inputs.action }}-${{ inputs.version }}"
+          ACTION="${{ inputs.action }}"
+          VERSION="${{ inputs.version }}"
 
-            **Action:** `${{ inputs.action }}`
-            **Version:** `${{ inputs.version }}`
-            ${{ inputs.action == 'add' && format('**Upstream config:** `{0}`', env.UPSTREAM_URL) || '' }}
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-            ### Changes
-            ${{ inputs.action == 'add' && format('- Generated `config/prow/release-branch-jobs/{0}.yaml` from upstream config\n- Added envsubst line to `deploy-lts-prow.yaml`', inputs.version) || format('- Removed `config/prow/release-branch-jobs/{0}.yaml`\n- Removed envsubst line from `deploy-lts-prow.yaml`', inputs.version) }}
+          # Check if there are changes to commit (tracked, staged, or untracked)
+          if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "⚠️  No changes detected. Nothing to commit."
+            exit 0
+          fi
 
-            ${{ inputs.action == 'add' && format('### Job Comparison (vs {0})\n{1}', steps.job-diff.outputs.prev_version, steps.job-diff.outputs.job_diff_summary) || '' }}
+          # Commit and push
+          COMMIT_MSG="${{ inputs.action == 'add' && format('Add Prow job config for LTS {0}', inputs.version) || format('Remove Prow job config for deprecated LTS {0}', inputs.version) }}"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "$COMMIT_MSG"
+          git push origin "$BRANCH" --force
 
-            ### Checklist
-            - [ ] Review the generated/modified files
-            ${{ inputs.action == 'add' && format('- [ ] Review any job differences flagged above (dropped/new jobs vs {0})', steps.job-diff.outputs.prev_version) || '' }}
-            - [ ] ${{ inputs.action == 'add' && format('Run [Deploy AKS LTS Prow](../actions/workflows/deploy-lts-prow.yaml) workflow for this branch') || 'Confirm version is truly deprecated/EOL' }}
-            - [ ] ${{ inputs.action == 'add' && format('Create test PR on [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) targeting `release-{0}-lts` branch', inputs.version) || 'No remaining LTS branches depend on this config' }}
-            - [ ] Merge this PR
+          # Build PR title
+          if [ "$ACTION" = "add" ]; then
+            PR_TITLE="Add LTS $VERSION Prow job config"
+          else
+            PR_TITLE="Remove deprecated LTS $VERSION Prow job config"
+          fi
 
-            ---
-            *Generated by the [Manage LTS Prow Job Configs](${{ github.server_url }}/${{ github.repository }}/actions/workflows/manage-lts-prow-config.yaml) workflow.*
-          labels: |
-            automation
-            prow-config
+          # Build PR body
+          PR_BODY="## Prow Job Config — LTS ${VERSION}
+          
+          **Action:** \`${ACTION}\`
+          **Version:** \`${VERSION}\`"
+
+          if [ "$ACTION" = "add" ]; then
+            PR_BODY="${PR_BODY}
+          **Upstream:** \`${UPSTREAM_URL}\`
+
+          ### What changed
+          - Generated \`config/prow/release-branch-jobs/${VERSION}.yaml\` from [upstream config](${UPSTREAM_URL})
+          - Filtered out GCE/EC2 jobs, removed \`cluster:\` lines, applied \`-lts\` branch suffix
+          - Bumped memory to 16Gi for \`pull-kubernetes-verify\` and \`pull-kubernetes-linter-hints\`
+
+          ### Job Comparison (vs ${{ steps.job-diff.outputs.prev_version }})
+          ${{ steps.job-diff.outputs.job_diff_summary }}
+
+          ### Review Checklist
+          - [ ] Verify the generated jobs look correct (\`config/prow/release-branch-jobs/${VERSION}.yaml\`)
+          - [ ] Check that branch references use \`release-${VERSION}-lts\` (not \`release-${VERSION}\`)
+          - [ ] Review any dropped or new jobs flagged above
+          - [ ] After merge, run [Deploy AKS LTS Prow](../actions/workflows/deploy-lts-prow.yaml) to apply
+          - [ ] Create a test PR on [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) targeting \`release-${VERSION}-lts\` to verify jobs trigger"
+          else
+            PR_BODY="${PR_BODY}
+
+          ### What changed
+          - Removed \`config/prow/release-branch-jobs/${VERSION}.yaml\`
+
+          ### Review Checklist
+          - [ ] Confirm LTS ${VERSION} is end-of-life and no longer needs Prow CI
+          - [ ] Verify no open PRs on [aks-lts/kubernetes](https://github.com/aks-lts/kubernetes) target \`release-${VERSION}-lts\`
+          - [ ] After merge, run [Deploy AKS LTS Prow](../actions/workflows/deploy-lts-prow.yaml) to apply"
+          fi
+
+          PR_BODY="${PR_BODY}
+
+          ---
+          *Auto-generated by [Manage LTS Prow Job Configs](https://github.com/${{ github.repository }}/actions/workflows/manage-lts-prow-config.yaml) workflow run [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).*"
+
+          # Create PR (or update if branch already has one)
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --json number -q '.[0].number' 2>/dev/null || echo "")
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "Updating existing PR #${EXISTING_PR}..."
+            gh pr edit "$EXISTING_PR" --title "$PR_TITLE" --body "$PR_BODY"
+            PR_URL=$(gh pr view "$EXISTING_PR" --json url -q '.url')
+            echo "✅ Updated PR: $PR_URL"
+          else
+            echo "Creating new PR..."
+            PR_URL=$(gh pr create \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --base main \
+              --head "$BRANCH")
+            echo "✅ Created PR: $PR_URL"
+          fi
+
+          # Write summary to workflow run page
+          {
+            echo "## ✅ Pull Request Created"
+            echo ""
+            echo "**PR:** $PR_URL"
+            echo "**Action:** \`${ACTION}\` | **Version:** \`${VERSION}\`"
+            echo ""
+            if [ "$ACTION" = "add" ]; then
+              echo "### Job Comparison (vs ${{ steps.job-diff.outputs.prev_version }})"
+              echo "${{ steps.job-diff.outputs.job_diff_summary }}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
