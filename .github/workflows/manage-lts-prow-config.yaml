@@ -25,6 +25,11 @@ on:
         description: 'URL to raw upstream config (optional for add — defaults to upstream kubernetes/test-infra for the given version)'
         required: false
         type: string
+      dry_run:
+        description: 'Dry run — preview changes without pushing branch or creating PR'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -236,6 +241,7 @@ jobs:
       - name: Create branch, commit, and open PR
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
 
@@ -253,11 +259,36 @@ jobs:
             exit 0
           fi
 
-          # Commit and push
+          # Commit locally (needed for diff preview in both modes)
           COMMIT_MSG="${{ inputs.action == 'add' && format('Add Prow job config for LTS {0}', inputs.version) || format('Remove Prow job config for deprecated LTS {0}', inputs.version) }}"
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "$COMMIT_MSG"
+
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "🔍 [DRY RUN] Would push branch '$BRANCH' and create PR."
+            echo ""
+            echo "═══ Changes Preview ═══"
+            echo ""
+            echo "Files changed:"
+            git diff --stat HEAD~1
+            echo ""
+            echo "Full diff:"
+            git diff HEAD~1
+            echo "═══════════════════════"
+
+            # Write dry run summary
+            {
+              echo "## 🔍 Dry Run — Preview Only"
+              echo ""
+              echo "**Action:** \`${ACTION}\` | **Version:** \`${VERSION}\`"
+              echo ""
+              echo "No branch was pushed and no PR was created."
+              echo "Uncheck **dry_run** and re-run to apply."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           git push origin "$BRANCH" --force
 
           # Build PR title
