@@ -506,8 +506,15 @@ jobs:
           else
             echo "🔍 [DRY RUN] Would push branch '$CHANGELOG_BRANCH' and create PR."
             echo ""
-            echo "Changelog diff:"
+            echo "═══ Changelog Preview (v${NEW_VERSION}-akslts) ═══"
+            cat "$SNIPPET_PATH"
+            echo "═══════════════════════════════════════════════════"
+            echo ""
+            echo "Files changed:"
             git diff --stat HEAD~1
+            echo ""
+            echo "Full diff:"
+            git diff HEAD~1 -- "$CHANGELOG_FILE"
           fi
 
       - name: Release summary
