@@ -34,7 +34,7 @@ on:
         description: 'Dry run — skip tag push and PR creation'
         required: false
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
