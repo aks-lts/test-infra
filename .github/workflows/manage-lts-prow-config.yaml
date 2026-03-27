@@ -27,8 +27,7 @@ on:
         type: string
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 # NOTE: deploy-lts-prow.yaml dynamically discovers all config files in
 # config/prow/release-branch-jobs/ (excluding base.yaml) via glob.
@@ -39,6 +38,15 @@ jobs:
   manage-prow-config:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.LTS_RELEASE_APP_ID }}
+          private-key: ${{ secrets.LTS_RELEASE_APP_PRIVATE_KEY }}
+          owner: aks-lts
+          repositories: test-infra
+
       - name: Validate inputs
         run: |
           VERSION="${{ inputs.version }}"
@@ -66,6 +74,8 @@ jobs:
 
       - name: Check out repo
         uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Check current state
         run: |
@@ -225,7 +235,7 @@ jobs:
 
       - name: Create branch, commit, and open PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
 
