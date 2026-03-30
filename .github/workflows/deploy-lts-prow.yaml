@@ -81,11 +81,11 @@ jobs:
           echo "CAPZ_SA=${{ steps.capzbicep.outputs.capzsastorage_name }}" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@v5
 
       # Use admin credentials temporarily to bootstrap RBAC for the GitHub OIDC identity
       - name: Set AKS cluster context (admin bootstrap)
-        uses: azure/aks-set-context@v4
+        uses: azure/aks-set-context@v5
         with:
           resource-group: ${{ secrets.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
@@ -108,7 +108,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set AKS cluster context (oidc)
-        uses: azure/aks-set-context@v4
+        uses: azure/aks-set-context@v5
         with:
           resource-group: ${{ secrets.AZURE_RG }}
           cluster-name: ${{ steps.bicep.outputs.aksClusterName }}
