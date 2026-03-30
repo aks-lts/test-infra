@@ -1,4 +1,5 @@
 param namePrefix string
+#disable-next-line no-unused-params
 param location string
 param ingressIP string
 @secure()

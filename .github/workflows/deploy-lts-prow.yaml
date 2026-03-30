@@ -6,6 +6,11 @@ on:
         description: 'Environment to run against'
         type: environment
         required: true
+      deploy_capz:
+        description: 'Deploy CAPZ infrastructure (disabled — not testable right now)'
+        type: boolean
+        required: false
+        default: false
 permissions:
   id-token: write
   contents: read
@@ -37,11 +42,15 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: create resourceGroups
+      - name: Create Prow resource group
         run: |
           if [ $(az group exists --name ${{ secrets.AZURE_RG }}) = false ]; then
               az group create --name ${{ secrets.AZURE_RG }} --location ${{ secrets.AZURE_LOCATION }}
           fi
+
+      - name: Create CAPZ resource group
+        if: inputs.deploy_capz
+        run: |
           if [ $(az group exists --name ${{ secrets.CAPZ_RG }}) = false ]; then
               az group create --name ${{ secrets.CAPZ_RG }} --location ${{ secrets.AZURE_LOCATION }}
           fi
@@ -63,6 +72,7 @@ jobs:
           failOnStdErr: false
 
       - name: Deploy CAPZ Bicep
+        if: inputs.deploy_capz
         id: capzbicep
         uses: azure/arm-deploy@v2
         with:
@@ -78,6 +88,10 @@ jobs:
           echo "AZURE_STORAGE_ACCOUNT_USER=${{ steps.bicep.outputs.storageAccountName }}" >> "$GITHUB_ENV"
           echo "PUBLIC_IP_NAME=${{ steps.bicep.outputs.publicIpName }}" >> "$GITHUB_ENV"
           echo "CLUSTER_RG=${{ steps.bicep.outputs.resourceGroupName }}" >> "$GITHUB_ENV"
+
+      - name: Fetch CAPZ config
+        if: inputs.deploy_capz
+        run: |
           echo "CAPZ_SA=${{ steps.capzbicep.outputs.capzsastorage_name }}" >> "$GITHUB_ENV"
 
       - name: Install Kubectl
@@ -158,10 +172,14 @@ jobs:
           PUBLIC_IP_ADDRESS=$(az network public-ip show -g ${{ secrets.AZURE_RG }} -n ${{ steps.bicep.outputs.publicIpName }} | jq -r '.ipAddress')
           echo "::add-mask::$PUBLIC_IP_ADDRESS"
           echo "PUBLIC_IP_ADDRESS=$PUBLIC_IP_ADDRESS" >> "$GITHUB_ENV"
+          echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
+
+      - name: Fetch CAPZ registry and key vault config
+        if: inputs.deploy_capz
+        run: |
           CAPZ_CI_REGISTRY=$(az acr show -g ${{ secrets.CAPZ_RG }} -n ${{ steps.capzbicep.outputs.capzci_registry_name }}  | jq .loginServer)
           echo "::add-mask::$CAPZ_CI_REGISTRY"
           echo "CAPZ_CI_REGISTRY=$CAPZ_CI_REGISTRY" >> "$GITHUB_ENV"
-          echo "AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> "$GITHUB_ENV"
           echo "::add-mask::${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}"
           echo "CAPZ_GMSA_KV=${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}" >> "$GITHUB_ENV"
 
@@ -176,8 +194,6 @@ jobs:
           rm cm.yaml
         env:
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          CAPZ_RG: ${{ secrets.CAPZ_RG }}
-          CAPZ_GMSA_KV: ${{ steps.capzbicep.outputs.capz_gmsa_kv_name }}
 
       - name: 'Apply Prowjob CRD'
         run: for f in config/prow/k8s/prowjob/*.yaml; do kubectl apply --server-side=true -f $f; done
