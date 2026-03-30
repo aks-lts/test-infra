@@ -65,7 +65,7 @@ jobs:
           echo "UPSTREAM_URL=$UPSTREAM_URL" >> "$GITHUB_ENV"
 
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Check current state
         run: |
