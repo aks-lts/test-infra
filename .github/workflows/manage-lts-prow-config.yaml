@@ -25,10 +25,14 @@ on:
         description: 'URL to raw upstream config (optional for add — defaults to upstream kubernetes/test-infra for the given version)'
         required: false
         type: string
+      dry_run:
+        description: 'Dry run — preview changes without pushing branch or creating PR'
+        required: false
+        type: boolean
+        default: true
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 # NOTE: deploy-lts-prow.yaml dynamically discovers all config files in
 # config/prow/release-branch-jobs/ (excluding base.yaml) via glob.
@@ -39,6 +43,15 @@ jobs:
   manage-prow-config:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.LTS_RELEASE_APP_ID }}
+          private-key: ${{ secrets.LTS_RELEASE_APP_PRIVATE_KEY }}
+          owner: aks-lts
+          repositories: test-infra
+
       - name: Validate inputs
         run: |
           VERSION="${{ inputs.version }}"
@@ -65,7 +78,9 @@ jobs:
           echo "UPSTREAM_URL=$UPSTREAM_URL" >> "$GITHUB_ENV"
 
       - name: Check out repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Check current state
         run: |
@@ -107,7 +122,38 @@ jobs:
           # With dynamic glob discovery this should be a no-op, but just in case.
           git checkout -- .github/workflows/ 2>/dev/null || true
 
+          # Fix comment indentation: top-level comments (column 0) break YAML when
+          # concatenated under the presubmits mapping in base.yaml. Indent them.
+          sed -i 's/^#/  #/' "$CONFIG_FILE"
+
           echo "✅ Successfully generated Prow config for ${VERSION}"
+
+      - name: Validate combined Prow config YAML
+        if: inputs.action == 'add'
+        run: |
+          set -euo pipefail
+          echo "🔍 Validating combined Prow config YAML..."
+
+          # Simulate the concatenation that deploy-lts-prow.yaml does
+          cat config/prow/release-branch-jobs/base.yaml > /tmp/cm-validate.yaml
+          for f in $(ls config/prow/release-branch-jobs/*.yaml | grep -v base.yaml | sort -V); do
+            cat "$f" >> /tmp/cm-validate.yaml
+          done
+
+          # Validate YAML parses correctly
+          python3 -c "
+          import yaml, sys
+          try:
+              data = yaml.safe_load(open('/tmp/cm-validate.yaml'))
+              presubmits = data.get('presubmits', {})
+              for org_repo, jobs in presubmits.items():
+                  print(f'✅ {org_repo}: {len(jobs)} jobs')
+              print(f'✅ YAML validation passed')
+          except Exception as e:
+              print(f'❌ YAML validation failed: {e}')
+              sys.exit(1)
+          "
+          rm /tmp/cm-validate.yaml
 
       - name: Compare jobs against previous version
         if: inputs.action == 'add'
@@ -117,15 +163,14 @@ jobs:
 
           CONFIG_FILE="config/prow/release-branch-jobs/${VERSION}.yaml"
 
-          # Extract job names from the newly generated config
-          NEW_JOBS=$(grep -E '^\s*name:\s' "$CONFIG_FILE" | sed 's/.*name:\s*//' | sort)
-          NEW_COUNT=$(echo "$NEW_JOBS" | wc -l)
-          echo "📊 New config (${VERSION}) has ${NEW_COUNT} jobs:"
+          # Extract pull-kubernetes job names only (ignore container/nested name fields)
+          NEW_JOBS=$(grep -E '^\s*name:\s*pull-kubernetes' "$CONFIG_FILE" | sed 's/.*name:\s*//' | sort -u)
+          NEW_COUNT=$(echo "$NEW_JOBS" | grep -c . || true)
+          echo "📊 New config (${VERSION}) has ${NEW_COUNT} pull-kubernetes jobs:"
           echo "$NEW_JOBS"
           echo ""
 
           # Find the previous LTS version config to compare against.
-          # List all versioned configs, exclude the new one, pick the highest version.
           PREV_CONFIG=""
           PREV_VERSION=""
           for f in $(ls config/prow/release-branch-jobs/*.yaml | grep -v base.yaml | sort -V); do
@@ -138,69 +183,55 @@ jobs:
 
           if [ -z "$PREV_CONFIG" ]; then
             echo "⚠️  No previous LTS version config found — cannot compare jobs."
-            echo "   Skipping diff (first LTS config)."
-            echo "job_diff_summary=No previous version to compare against." >> "$GITHUB_OUTPUT"
+            # All jobs are new
+            SUMMARY="### Jobs in v${VERSION}\n\n"
+            NUM=0
+            while IFS= read -r j; do
+              [ -z "$j" ] && continue
+              NUM=$((NUM + 1))
+              SUMMARY+="${NUM}. \`${j}\` 🆕\n"
+            done <<< "$NEW_JOBS"
+            SUMMARY+="\n### Jobs Dropped in v${VERSION}\n\n✅ No jobs dropped (first LTS config).\n"
+            echo -e "$SUMMARY" > /tmp/job_diff_summary.md
             exit 0
           fi
 
           echo "Comparing against previous version: ${PREV_VERSION} (${PREV_CONFIG})"
-          PREV_JOBS=$(grep -E '^\s*name:\s' "$PREV_CONFIG" | sed 's/.*name:\s*//' | sort)
-          PREV_COUNT=$(echo "$PREV_JOBS" | wc -l)
-          echo "Previous config (${PREV_VERSION}) has ${PREV_COUNT} jobs:"
-          echo "$PREV_JOBS"
-          echo ""
+          PREV_JOBS=$(grep -E '^\s*name:\s*pull-kubernetes' "$PREV_CONFIG" | sed 's/.*name:\s*//' | sort -u)
+          PREV_COUNT=$(echo "$PREV_JOBS" | grep -c . || true)
 
-          # Find jobs only in previous (dropped)
-          DROPPED=$(comm -23 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS"))
-          # Find jobs only in new (added)
-          ADDED=$(comm -13 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS"))
-          # Find jobs in both (common)
-          COMMON=$(comm -12 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS"))
+          # Find jobs only in previous (dropped) and only in new (added)
+          DROPPED=$(comm -23 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS") | grep . || true)
+          ADDED=$(comm -13 <(echo "$PREV_JOBS") <(echo "$NEW_JOBS") | grep . || true)
 
-          SUMMARY=""
-          HAS_DIFF=false
+          # Build "Jobs in vX.Y" — numbered list with tags
+          SUMMARY="### Jobs in v${VERSION}\n\n"
+          NUM=0
+          while IFS= read -r j; do
+            [ -z "$j" ] && continue
+            NUM=$((NUM + 1))
+            if echo "$ADDED" | grep -qxF "$j"; then
+              SUMMARY+="${NUM}. \`${j}\` 🆕\n"
+            else
+              SUMMARY+="${NUM}. \`${j}\`\n"
+            fi
+          done <<< "$NEW_JOBS"
 
-          if [ -n "$DROPPED" ]; then
-            HAS_DIFF=true
-            DROP_COUNT=$(echo "$DROPPED" | wc -l)
-            echo "🔴 ${DROP_COUNT} job(s) in ${PREV_VERSION} but MISSING in ${VERSION}:"
-            echo "$DROPPED" | while read -r j; do echo "   - $j"; done
-            SUMMARY+="🔴 **Dropped from ${PREV_VERSION}:**\n"
-            while IFS= read -r j; do
-              SUMMARY+="- \`$j\`\n"
-            done <<< "$DROPPED"
-            SUMMARY+="\n"
-          fi
-
-          if [ -n "$ADDED" ]; then
-            HAS_DIFF=true
-            ADD_COUNT=$(echo "$ADDED" | wc -l)
-            echo "🟢 ${ADD_COUNT} job(s) NEW in ${VERSION} (not in ${PREV_VERSION}):"
-            echo "$ADDED" | while read -r j; do echo "   + $j"; done
-            SUMMARY+="🟢 **New in ${VERSION}:**\n"
-            while IFS= read -r j; do
-              SUMMARY+="- \`$j\`\n"
-            done <<< "$ADDED"
-            SUMMARY+="\n"
-          fi
-
-          COMMON_COUNT=$(echo "$COMMON" | wc -l)
-
-          if [ "$HAS_DIFF" = false ]; then
-            echo "✅ Job sets are identical between ${PREV_VERSION} and ${VERSION} (${COMMON_COUNT} jobs)"
-            SUMMARY="✅ Job sets are identical between ${PREV_VERSION} and ${VERSION} (${COMMON_COUNT} jobs)."
+          # Build "Jobs Dropped" section
+          SUMMARY+="\n### Jobs Dropped in v${VERSION}\n\n"
+          if [ -z "$DROPPED" ]; then
+            SUMMARY+="✅ No jobs dropped compared to v${PREV_VERSION}.\n"
           else
-            echo ""
-            echo "ℹ️  ${COMMON_COUNT} jobs are common between both versions."
-            SUMMARY+="ℹ️ ${COMMON_COUNT} job(s) common between both versions."
+            while IFS= read -r j; do
+              [ -z "$j" ] && continue
+              SUMMARY+="- \`${j}\`\n"
+            done <<< "$DROPPED"
           fi
 
-          # Write multiline summary to output
-          {
-            echo "job_diff_summary<<DIFF_EOF"
-            echo -e "$SUMMARY"
-            echo "DIFF_EOF"
-          } >> "$GITHUB_OUTPUT"
+          echo -e "$SUMMARY"
+
+          # Write summary to a file (avoids backtick shell interpretation in step output expansion)
+          echo -e "$SUMMARY" > /tmp/job_diff_summary.md
 
           {
             echo "prev_version=$PREV_VERSION"
@@ -225,7 +256,8 @@ jobs:
 
       - name: Create branch, commit, and open PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
 
@@ -243,11 +275,59 @@ jobs:
             exit 0
           fi
 
-          # Commit and push
+          # Commit locally (needed for diff preview in both modes)
           COMMIT_MSG="${{ inputs.action == 'add' && format('Add Prow job config for LTS {0}', inputs.version) || format('Remove Prow job config for deprecated LTS {0}', inputs.version) }}"
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "$COMMIT_MSG"
+
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "🔍 [DRY RUN] Would push branch '$BRANCH' and create PR."
+            echo ""
+            echo "═══ Changes Preview ═══"
+            echo ""
+            echo "Files changed:"
+            git diff --stat HEAD~1
+            echo ""
+            echo "Full diff:"
+            git diff HEAD~1
+            echo "═══════════════════════"
+
+            # Write dry run summary with change preview
+            {
+              echo "## 🔍 Dry Run — Preview Only"
+              echo ""
+              echo "**Action:** \`${ACTION}\` | **Version:** \`${VERSION}\`"
+              echo ""
+              echo "**Contents:**"
+              if [ "$ACTION" = "add" ]; then
+                echo "- [Jobs in v${VERSION}](#jobs-in-v${VERSION})"
+                echo "- [Jobs Dropped in v${VERSION}](#jobs-dropped-in-v${VERSION})"
+              fi
+              echo "- [Files Changed](#files-changed)"
+              echo "- [Full Diff](#full-diff)"
+              echo ""
+              if [ "$ACTION" = "add" ]; then
+                cat /tmp/job_diff_summary.md
+                echo ""
+              fi
+              echo "### Files Changed"
+              echo '```'
+              git diff --stat HEAD~1
+              echo '```'
+              echo ""
+              echo "### Full Diff"
+              echo '```diff'
+              git diff HEAD~1
+              echo '```'
+              echo ""
+              echo "---"
+              echo "No branch was pushed and no PR was created."
+              echo "Uncheck **dry_run** and re-run to apply."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
           git push origin "$BRANCH" --force
 
           # Build PR title
@@ -273,7 +353,7 @@ jobs:
           - Bumped memory to 16Gi for \`pull-kubernetes-verify\` and \`pull-kubernetes-linter-hints\`
 
           ### Job Comparison (vs ${{ steps.job-diff.outputs.prev_version }})
-          ${{ steps.job-diff.outputs.job_diff_summary }}
+          JOB_DIFF_PLACEHOLDER
 
           ### Review Checklist
           - [ ] Verify the generated jobs look correct (\`config/prow/release-branch-jobs/${VERSION}.yaml\`)
@@ -297,6 +377,12 @@ jobs:
 
           ---
           *Auto-generated by [Manage LTS Prow Job Configs](https://github.com/${{ github.repository }}/actions/workflows/manage-lts-prow-config.yaml) workflow run [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).*"
+
+          # Inject job diff summary safely (avoids backtick interpretation in double quotes)
+          if [ -f /tmp/job_diff_summary.md ]; then
+            JOB_DIFF_CONTENT=$(cat /tmp/job_diff_summary.md)
+            PR_BODY="${PR_BODY//JOB_DIFF_PLACEHOLDER/$JOB_DIFF_CONTENT}"
+          fi
 
           # Create PR (or update if branch already has one)
           EXISTING_PR=$(gh pr list --head "$BRANCH" --json number -q '.[0].number' 2>/dev/null || echo "")
@@ -325,6 +411,6 @@ jobs:
             echo ""
             if [ "$ACTION" = "add" ]; then
               echo "### Job Comparison (vs ${{ steps.job-diff.outputs.prev_version }})"
-              echo "${{ steps.job-diff.outputs.job_diff_summary }}"
+              cat /tmp/job_diff_summary.md
             fi
           } >> "$GITHUB_STEP_SUMMARY"
