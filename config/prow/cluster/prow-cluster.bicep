@@ -32,7 +32,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         maxPods: 110
         type: 'VirtualMachineScaleSets'
         maxCount: 5
-        minCount: 2
+        minCount: 1
         count: 2
         enableAutoScaling: true
         mode: 'System'
@@ -65,7 +65,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         maxPods: 110
         type: 'VirtualMachineScaleSets'
         maxCount: 10
-        minCount: 2
+        minCount: 1
         count: 2
         enableAutoScaling: true
         mode: 'User'
