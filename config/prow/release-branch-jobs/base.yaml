@@ -177,6 +177,9 @@ presets:
     readOnly: true
 
 tide:
+  target_url: https://$PROW_HOST/tide
+  merge_method:
+    $GITHUB_ORG/$GITHUB_REPO: squash
   queries:
     - labels:
         - lgtm
