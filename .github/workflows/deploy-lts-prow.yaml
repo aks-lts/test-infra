@@ -198,6 +198,11 @@ jobs:
       - name: 'Apply Prowjob CRD'
         run: for f in config/prow/k8s/prowjob/*.yaml; do kubectl apply --server-side=true -f $f; done
 
+      - name: 'Snapshot secrets before apply'
+        run: |
+          kubectl get secret s3-credentials -n prow -o jsonpath='{.data}' | md5sum | cut -d' ' -f1 > /tmp/s3-prow-before
+          kubectl get secret s3-credentials -n test-pods -o jsonpath='{.data}' | md5sum | cut -d' ' -f1 > /tmp/s3-testpods-before
+
       - name: 'Apply Prow app manifests'
         run: for f in config/prow/k8s/app/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
@@ -208,7 +213,23 @@ jobs:
         env:
           AZURE_RG: ${{ secrets.AZURE_RG }}
 
-      - name: 'Restart Prow components to pick up secret changes'
+      - name: 'Restart Prow components if secrets changed'
         run: |
-          kubectl rollout restart deployment -n prow deck crier minio
-          kubectl rollout status deployment -n prow deck crier minio --timeout=300s
+          PROW_AFTER=$(kubectl get secret s3-credentials -n prow -o jsonpath='{.data}' | md5sum | cut -d' ' -f1)
+          TESTPODS_AFTER=$(kubectl get secret s3-credentials -n test-pods -o jsonpath='{.data}' | md5sum | cut -d' ' -f1)
+          CHANGED=false
+          if [ "$PROW_AFTER" != "$(cat /tmp/s3-prow-before)" ]; then
+            echo "s3-credentials in prow namespace changed"
+            CHANGED=true
+          fi
+          if [ "$TESTPODS_AFTER" != "$(cat /tmp/s3-testpods-before)" ]; then
+            echo "s3-credentials in test-pods namespace changed"
+            CHANGED=true
+          fi
+          if [ "$CHANGED" = "true" ]; then
+            echo "Restarting Prow components to pick up secret changes..."
+            kubectl rollout restart deployment -n prow deck crier minio
+            kubectl rollout status deployment -n prow deck crier minio --timeout=300s
+          else
+            echo "No secret changes detected, skipping restart"
+          fi
