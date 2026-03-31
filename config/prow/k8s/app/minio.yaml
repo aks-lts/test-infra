@@ -1,4 +1,3 @@
-
 apiVersion: v1
 kind: Secret
 metadata:
@@ -9,7 +8,7 @@ stringData:
     {
       "region": "minio",
       "access_key": "$AZURE_STORAGE_ACCOUNT_USER",
-      "endpoint": "http://minio.prow.svc.cluster.local",
+      "endpoint": "https://minio.prow.svc.cluster.local",
       "insecure": true,
       "s3_force_path_style": true,
       "secret_key": "$AZURE_STORAGE_ACCOUNT_PASSWORD"
@@ -33,6 +32,21 @@ spec:
     spec:
       nodeSelector:
         agentpool: prow
+      initContainers:
+      - name: generate-tls
+        image: alpine/openssl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          openssl req -x509 -nodes -days 3650 \
+            -newkey rsa:2048 \
+            -keyout /certs/private.key \
+            -out /certs/public.crt \
+            -subj "/CN=minio.prow.svc.cluster.local" \
+            -addext "subjectAltName=DNS:minio,DNS:minio.prow,DNS:minio.prow.svc,DNS:minio.prow.svc.cluster.local"
+        volumeMounts:
+        - name: tls-certs
+          mountPath: /certs
       containers:
       - name: minio
         image: minio/minio:RELEASE.2022-10-24T18-35-07Z
@@ -53,11 +67,19 @@ spec:
           httpGet:
             path: /minio/health/ready
             port: 9000
+            scheme: HTTPS
           periodSeconds: 20
         livenessProbe:
           httpGet:
             path: /minio/health/live
             port: 9000
+            scheme: HTTPS
+        volumeMounts:
+        - name: tls-certs
+          mountPath: /root/.minio/certs
+      volumes:
+      - name: tls-certs
+        emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -67,7 +89,7 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
+  - port: 443
     targetPort: 9000
     protocol: TCP
   selector:
