@@ -1,5 +1,5 @@
-# 1.32-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
-# Based on https://github.com/kubernetes/test-infra/blob/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/1.32.yaml
+  # 1.32-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
+  # Based on https://github.com/kubernetes/test-infra/blob/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/1.32.yaml
   - always_run: false
     branches:
     - release-1.32-lts
