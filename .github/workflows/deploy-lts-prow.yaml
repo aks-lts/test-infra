@@ -207,3 +207,8 @@ jobs:
         run: for f in config/prow/k8s/test-pods/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
           AZURE_RG: ${{ secrets.AZURE_RG }}
+
+      - name: 'Restart Prow components to pick up secret changes'
+        run: |
+          kubectl rollout restart deployment -n prow deck crier minio
+          kubectl rollout status deployment -n prow deck crier minio --timeout=300s
