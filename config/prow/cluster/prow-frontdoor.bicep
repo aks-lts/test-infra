@@ -1,11 +1,12 @@
 param namePrefix string
+#disable-next-line no-unused-params
 param location string
 param ingressIP string
 @secure()
 param frontDoorSecret string = ''
 
 resource clusterIngressFrontdoor 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
-  name: '${namePrefix}-${uniqueString(resourceGroup().id, location)}'
+  name: namePrefix
   location: 'Global'
   sku: {
     name: 'Standard_AzureFrontDoor'
@@ -17,7 +18,7 @@ resource clusterIngressFrontdoor 'Microsoft.Cdn/profiles@2022-11-01-preview' = {
 
 resource azureProwEndpoint 'Microsoft.Cdn/profiles/afdendpoints@2022-11-01-preview' = {
   parent: clusterIngressFrontdoor
-  name: 'ltsprow-${uniqueString(resourceGroup().id, location)}'
+  name: 'aks-lts-prow'
   location: 'Global'
   properties: {
     enabledState: 'Enabled'

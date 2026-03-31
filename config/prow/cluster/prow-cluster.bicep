@@ -5,14 +5,14 @@ param aks_cluster_admin_groups array = []
 param system_vm_sku string = 'Standard_DS3_v2'
 param prow_vm_sku string = 'Standard_DS3_v2'
 param test_vm_sku string = 'Standard_D32d_v4'
-param storage_account_prefix string = 'prow'
+param storage_account_name string = 'aksltsprowdata'
 
 @secure()
 param frontDoorSecret string = ''
 
 
 resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
-  name: '${aks_cluster_prefix}-${uniqueString(resourceGroup().id, aks_cluster_region)}'
+  name: aks_cluster_prefix
   location: aks_cluster_region
   sku: {
     name: 'Base'
@@ -32,7 +32,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         maxPods: 110
         type: 'VirtualMachineScaleSets'
         maxCount: 5
-        minCount: 2
+        minCount: 1
         count: 2
         enableAutoScaling: true
         mode: 'System'
@@ -65,7 +65,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
         maxPods: 110
         type: 'VirtualMachineScaleSets'
         maxCount: 10
-        minCount: 2
+        minCount: 1
         count: 2
         enableAutoScaling: true
         mode: 'User'
@@ -113,7 +113,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2025-02-01' = {
 }
 
 resource ingresspip 'Microsoft.Network/publicIPAddresses@2022-11-01' = {
-  name: '${aks_cluster_prefix}-ingress-${uniqueString(resourceGroup().id, aks_cluster_region)}'
+  name: '${aks_cluster_prefix}-ingress'
   location: aks_cluster_region
   sku: {
     name: 'Standard'
@@ -137,7 +137,7 @@ resource clusteraccesspip 'Microsoft.Authorization/roleAssignments@2022-04-01' =
 }
 
 resource sa 'Microsoft.Storage/storageAccounts@2022-05-01' = {
-  name: '${storage_account_prefix}${uniqueString(resourceGroup().id, aks_cluster_region)}'
+  name: storage_account_name
   location: aks_cluster_region
   sku: {
     name: 'Standard_ZRS'
