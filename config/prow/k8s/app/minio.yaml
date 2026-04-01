@@ -9,7 +9,7 @@ stringData:
     {
       "region": "minio",
       "access_key": "$AZURE_STORAGE_ACCOUNT_USER",
-      "endpoint": "minio.prow.svc.cluster.local",
+      "endpoint": "http://minio.prow.svc.cluster.local",
       "insecure": true,
       "s3_force_path_style": true,
       "secret_key": "$AZURE_STORAGE_ACCOUNT_PASSWORD"

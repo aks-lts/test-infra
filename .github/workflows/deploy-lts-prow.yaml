@@ -24,7 +24,7 @@ jobs:
       GITHUB_REPO: ${{ vars.REPO }}
       HMAC_TOKEN: ${{ secrets.HMAC_TOKEN }}
       MINIO_CONSOLE_PORT: 8003
-      K8S_PROW_IMAGE_TAG: v20240802-66b115076
+      K8S_PROW_IMAGE_TAG: v20260225-8287579aa
     steps:
       - name: Generate fake mount secret
         run: |
@@ -207,3 +207,25 @@ jobs:
         run: for f in config/prow/k8s/test-pods/*.yaml; do envsubst < $f | kubectl apply -f -; done
         env:
           AZURE_RG: ${{ secrets.AZURE_RG }}
+
+      - name: 'Restart Prow components if secrets are out of sync'
+        run: |
+          # Compute current secret hash
+          SECRET_HASH=$(kubectl get secret s3-credentials -n prow -o jsonpath='{.data}' | md5sum | cut -d' ' -f1)
+          echo "Current s3-credentials hash: $SECRET_HASH"
+
+          # Check if Deck pods have the matching hash annotation
+          DECK_HASH=$(kubectl get deployment deck -n prow -o jsonpath='{.spec.template.metadata.annotations.s3-credentials-hash}' 2>/dev/null || echo "")
+          echo "Deck annotation hash: ${DECK_HASH:-<none>}"
+
+          if [ "$SECRET_HASH" != "$DECK_HASH" ]; then
+            echo "Secret hash mismatch — restarting Prow components..."
+            # Annotate deployments with the current hash (triggers rollout)
+            for deploy in deck crier; do
+              kubectl patch deployment "$deploy" -n prow -p \
+                "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"s3-credentials-hash\":\"$SECRET_HASH\"}}}}}"
+            done
+            kubectl rollout status deployment -n prow deck crier --timeout=300s
+          else
+            echo "Secret hash matches — no restart needed"
+          fi

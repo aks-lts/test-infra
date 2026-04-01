@@ -36,7 +36,7 @@ spec:
         agentpool: prow
       containers:
       - name: ghproxy
-        image: gcr.io/k8s-prow/ghproxy:$K8S_PROW_IMAGE_TAG
+        image: us-docker.pkg.dev/k8s-infra-prow/images/ghproxy:$K8S_PROW_IMAGE_TAG
         args:
         - --cache-dir=/cache
         - --cache-sizeGB=99
