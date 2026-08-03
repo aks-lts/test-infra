@@ -53,7 +53,7 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - name: Check out test-infra
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Validate versions and build matrix
         id: plan
@@ -135,7 +135,7 @@ jobs:
           repositories: kubernetes
 
       - name: Check out test-infra (for hack scripts)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: test-infra
 
