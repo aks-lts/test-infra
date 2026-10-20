@@ -35,29 +35,22 @@ spec:
         agentpool: prow
       containers:
       - name: minio
-        image: minio/minio:RELEASE.2022-02-24T22-12-01Z # https://github.com/minio/minio/pull/14418
-        args:
-        - gateway
-        - azure
-        - --console-address=0.0.0.0:$MINIO_CONSOLE_PORT
+        image: docker.io/scality/s3server:latest
         env:
-        - name: MINIO_ROOT_USER
+        - name: SCALITY_ACCESS_KEY_ID
           value: "$AZURE_STORAGE_ACCOUNT_USER"
-        - name: MINIO_ROOT_PASSWORD
+        - name: SCALITY_SECRET_ACCESS_KEY
           value: "$AZURE_STORAGE_ACCOUNT_PASSWORD"
-        - name: MINIO_REGION_NAME
-          value: minio
         ports:
-        - containerPort: 9000
+        - containerPort: 8000
         readinessProbe:
-          httpGet:
-            path: /minio/health/ready
-            port: 9000
-          periodSeconds: 20
+          tcpSocket:
+            port: 8000
+          periodSeconds: 10
         livenessProbe:
-          httpGet:
-            path: /minio/health/live
-            port: 9000
+          tcpSocket:
+            port: 8000
+          periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -68,7 +61,7 @@ spec:
   type: ClusterIP
   ports:
   - port: 80
-    targetPort: 9000
+    targetPort: 8000
     protocol: TCP
   selector:
     app: minio
@@ -82,7 +75,7 @@ spec:
   type: NodePort
   ports:
   - port: $MINIO_CONSOLE_PORT
-    targetPort: $MINIO_CONSOLE_PORT
+    targetPort: 8000
     protocol: TCP
   selector:
     app: minio
