@@ -67,6 +67,24 @@ LTS specific configuration and tooling for testing
 1. If tests don't run or fail, check https://aka.ms/aks/prow. Some of them might need additional tweaking, e.g. request less CPU/memory 
 1. Once all is looking good, remember to merge the PR on this repo.
 
+Run presubmits for one PR at a time and wait for its jobs to finish before
+triggering another PR. If one set still exceeds available capacity, use
+`/test <job-name>` to run individual jobs sequentially; `/retest` does not accept
+job names. Do not remove jobs or lower their resource requests to bypass capacity
+failures.
+
+The 1.31 and 1.32 job configurations use digest-pinned upstream 1.32 runner
+images because the previous images are no longer pullable. The 1.31 jobs still
+test their 1.31 checkout: Kubernetes selects Go from `.go-version`, while
+compatibility jobs retain their explicit `GO_VERSION` overrides. This is a
+runner-environment change, not identical tooling to the expired 1.31 images;
+validate it with the real presubmits before merging.
+
+Apply deployment changes through `deploy-lts-prow.yaml` from the reviewed branch,
+not by editing the cluster directly. Include any unmerged configuration already
+deployed to that cluster, especially the Azure log-gateway recovery, so deployment
+does not undo it. Digest pinning prevents tag drift, not upstream image deletion.
+
 # Updating image tags
 ## Prow log storage
 

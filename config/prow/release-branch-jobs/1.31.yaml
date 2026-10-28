@@ -1,5 +1,7 @@
   # 1.31-lts jobs, do not change indentation of the lines below, it need to be aligned with base.yaml
   # Based on https://github.com/kubernetes/test-infra/blob/refs/heads/master/config/jobs/kubernetes/sig-release/release-branch-jobs/1.31.yaml
+  # The upstream 1.31 runner images have expired. Use a digest-pinned 1.32 build environment;
+  # Kubernetes selects Go from the checkout's .go-version or the existing GO_VERSION overrides.
   - always_run: false
     branches:
     - release-1.31-lts
@@ -27,7 +29,7 @@
           value: ipv6
         - name: PARALLEL
           value: "true"
-        image: gcr.io/k8s-staging-test-infra/krte:v20251021-e2c2c9806f-1.31
+        image: gcr.io/k8s-staging-test-infra/krte:v20260608-c0707d679d-1.32@sha256:bf1e8961dfabb27d4d8fd95fb847ec1778bc77f69da4f2e834bc7dffbf8d8c76
         name: ""
         resources:
           limits:
@@ -58,7 +60,7 @@
         env:
         - name: WHAT
           value: external-dependencies-version vendor vendor-licenses
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         name: main
         resources:
           limits:
@@ -90,7 +92,7 @@
           value: "8"
         - name: KUBE_TIMEOUT
           value: -timeout=1h30m
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         name: ""
         resources:
           limits:
@@ -122,7 +124,7 @@
           value: 1.22.5
         - name: KUBE_HACK_TOOLS_GOTOOLCHAIN
           value: auto
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         name: ""
         resources:
           limits:
@@ -159,7 +161,7 @@
           value: \[Slow\]|\[Disruptive\]|\[Flaky\]|\[Feature:.+\]|PodSecurityPolicy|LoadBalancer|load.balancer|Simple.pod.should.support.exec.through.an.HTTP.proxy|subPath.should.support.existing|NFS|nfs|inline.execution.and.attach|should.be.rejected.when.no.endpoints.exist
         - name: PARALLEL
           value: "true"
-        image: gcr.io/k8s-staging-test-infra/krte:v20251021-e2c2c9806f-1.31
+        image: gcr.io/k8s-staging-test-infra/krte:v20260608-c0707d679d-1.32@sha256:bf1e8961dfabb27d4d8fd95fb847ec1778bc77f69da4f2e834bc7dffbf8d8c76
         name: ""
         resources:
           limits:
@@ -200,7 +202,7 @@
           value: "true"
         - name: IP_FAMILY
           value: ipv6
-        image: gcr.io/k8s-staging-test-infra/krte:v20251021-e2c2c9806f-1.31
+        image: gcr.io/k8s-staging-test-infra/krte:v20260608-c0707d679d-1.32@sha256:bf1e8961dfabb27d4d8fd95fb847ec1778bc77f69da4f2e834bc7dffbf8d8c76
         name: ""
         resources:
           limits:
@@ -238,7 +240,7 @@
           value: '{"api/alpha":"false", "api/beta":"false"}'
         - name: PARALLEL
           value: "true"
-        image: gcr.io/k8s-staging-test-infra/krte:v20251021-e2c2c9806f-1.31
+        image: gcr.io/k8s-staging-test-infra/krte:v20260608-c0707d679d-1.32@sha256:bf1e8961dfabb27d4d8fd95fb847ec1778bc77f69da4f2e834bc7dffbf8d8c76
         name: ""
         resources:
           limits:
@@ -263,7 +265,7 @@
       - command:
         - make
         - test
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         name: ""
         resources:
           limits:
@@ -296,7 +298,7 @@
           value: 1.22.5
         - name: KUBE_HACK_TOOLS_GOTOOLCHAIN
           value: auto
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         name: ""
         resources:
           limits:
@@ -326,7 +328,7 @@
         env:
         - name: WHAT
           value: typecheck
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         name: main
         resources:
           limits:
@@ -360,7 +362,7 @@
           value: release-1.31-lts
         - name: REPO_DIR
           value: /workspace/k8s.io/kubernetes
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         imagePullPolicy: Always
         name: ""
         resources:
@@ -397,7 +399,7 @@
           value: release-1.31-lts
         - name: REPO_DIR
           value: /workspace/k8s.io/kubernetes
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         imagePullPolicy: Always
         name: ""
         resources:
@@ -424,7 +426,7 @@
         - WHAT=golangci-lint-pr-hints
         command:
         - make
-        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20251029-79c2132152-1.31
+        image: gcr.io/k8s-staging-test-infra/kubekins-e2e:v20260608-c0707d679d-1.32@sha256:bd6e368acf41f6682a8c2e0dc49eab75c4795164a01cf85e3b681b6eadd6a0d1
         name: ""
         resources:
           limits:
