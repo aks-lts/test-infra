@@ -35,7 +35,9 @@ spec:
         agentpool: prow
       containers:
       - name: minio
-        image: minio/minio:RELEASE.2022-02-24T22-12-01Z # https://github.com/minio/minio/pull/14418
+        image: docker.io/bitnamilegacy/minio@sha256:78207aff2c29f233a02908537e6630b9f5e00f1edbce10f31977c0fb96dfb5a5 # 2022.2.24
+        command:
+        - /opt/bitnami/minio/bin/minio
         args:
         - gateway
         - azure

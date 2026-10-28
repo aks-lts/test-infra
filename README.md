@@ -68,6 +68,41 @@ LTS specific configuration and tooling for testing
 1. Once all is looking good, remember to merge the PR on this repo.
 
 # Updating image tags
+## Prow log storage
+
+Prow accesses the `aksltsprowdata` Azure Blob Storage account through an
+S3-compatible MinIO Azure gateway. Keep the `gateway azure` arguments in
+`config/prow/k8s/app/minio.yaml`: replacing the gateway with a standalone S3
+server points Prow at a different data store, so its existing Azure logs and
+job-history indexes are no longer visible. It does not delete the Azure blobs.
+
+During recovery, the historical logs were still in Azure, while newer logs had
+been written to the replacement S3 server's ephemeral local storage. We backed
+up that local data before replacing the server, then copied its missing objects
+into Azure. Restoring the gateway reconnected the historical logs; copying the
+local objects preserved the newer logs.
+
+The original MinIO 2022 image is no longer publicly pullable. The manifest uses
+a digest-pinned, Bitnami-packaged 2022.2.24 build and invokes the MinIO binary
+directly, bypassing Bitnami's server-only startup script.
+
+`bitnamilegacy` is Bitnami's official archive, not an arbitrary third-party
+mirror. [VMware acquired Bitnami in 2019](https://blogs.vmware.com/tanzu/vmware-image-builder-in-beta/),
+and [Broadcom acquired VMware in 2023](https://www.broadcom.com/company/news/financial-releases/61541).
+This establishes a known publisher for the temporary recovery image, not a
+security or support guarantee. It is not the upstream MinIO image; matching
+the version does not establish binary equivalence or security.
+Bitnami's [legacy archive policy](https://github.com/bitnami/charts/issues/35164)
+provides no updates or support and limits its intended use to temporary migration.
+Newer MinIO releases do not support Azure gateway mode. This legacy image is
+a recovery measure, not a supported long-term storage solution.
+
+If job history reports a missing `latest-build.txt`, check the configured
+backend and verify the object in Azure before recreating indexes. Preserve any
+local data from a replacement S3 server before restarting or replacing it;
+copy recovered objects without overwriting existing Azure blobs. Verify both
+the job-history page and a real build's Spyglass logs after restoring access.
+
 ## PROW (K8S_PROW_IMAGE_TAG)
 Image repo: https://console.cloud.google.com/gcr/images/k8s-prow
 
