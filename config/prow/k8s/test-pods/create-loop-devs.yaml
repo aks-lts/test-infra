@@ -1,0 +1,56 @@
+# A daemonset to create /dev/loopX device nodes before they are
+# needed.
+#
+# Normally, new nodes are created dynamically by the kernel. But nodes
+# in a KIND cluster are started with a copy of /dev from the host and
+# loop devices created later on do not show up in that static /dev
+# (https://github.com/kubernetes-sigs/kind/issues/1248). Creating
+# "enough" (1000 in this daemonset) in advance avoids running out of
+# loop devices in storage e2e tests.
+#
+# Mirrors the upstream Kubernetes Prow build clusters:
+# https://github.com/kubernetes/k8s.io/blob/main/kubernetes/aks-prow-build/kube-system/daemonsets.yaml
+#
+# The deploy workflow pipes this file through envsubst, so the script
+# must not contain shell variable references; xargs substitutes {}.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: create-loop-devs
+  namespace: kube-system
+  labels:
+    app: create-loop-devs
+spec:
+  selector:
+    matchLabels:
+      name: create-loop-devs
+  template:
+    metadata:
+      labels:
+        name: create-loop-devs
+    spec:
+      tolerations:
+        - operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: loopdev
+          command:
+            - sh
+            - -c
+            - |
+              while true; do
+                seq 0 1000 | xargs -I{} sh -c '[ -e /dev/loop{} ] || mknod /dev/loop{} b 7 {}'
+                sleep 100000000
+              done
+          image: mcr.microsoft.com/azurelinux/busybox:1.36@sha256:19ffa1dd7adfb8644954eff77ce03a1e6617e710a8137b2fccfcb434db774314
+          imagePullPolicy: IfNotPresent
+          resources: {}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: dev
+              mountPath: /dev
+      volumes:
+        - name: dev
+          hostPath:
+            path: /dev
